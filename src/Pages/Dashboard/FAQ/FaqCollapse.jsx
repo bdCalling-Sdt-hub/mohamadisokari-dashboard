@@ -8,7 +8,7 @@ const defaultText = `A dog is a type of domesticated animal. Known for its loyal
 
 // FAQ Header Component
 export const HeadFaq = ({ showModal }) => (
-  <div className="flex justify-between items-center py-5">
+  <div className="flex items-center justify-between py-5">
     <h1 className="text-[20px] font-medium">FAQ</h1>
     <button
       className="bg-smart text-white px-4 py-2.5 rounded-md shadow-md"
@@ -107,6 +107,13 @@ export default function FaqCollapse() {
     }));
 
   return (
+    <ConfigProvider
+    theme={{
+      token: {
+        colorPrimary: '#F97316',
+      },
+    }}
+  >
     <div className="h-full ">
       <HeadFaq showModal={showAddModal} />
 
@@ -123,7 +130,7 @@ export default function FaqCollapse() {
           </div>
         )}
         items={getItems()}
-        className="shadow-md bg-white"
+        className="bg-white shadow-md"
       />
 
       {/* Add/Edit FAQ Modal */}
@@ -208,5 +215,6 @@ export default function FaqCollapse() {
         </div>
       </Modal>
     </div>
+    </ConfigProvider>
   );
 }

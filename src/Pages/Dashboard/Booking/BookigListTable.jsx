@@ -1,233 +1,453 @@
-import React, { useState } from "react";
-import {
-  Form,
-  Input,
-  InputNumber,
-  Popconfirm,
-  Table,
+import React, { useState, useEffect } from 'react';
+import { 
+  Table, 
+  Input, 
+  Button, 
+  Space, 
+  Dropdown, 
+  Menu, 
+  Badge, 
+  Avatar,
   Typography,
-  ConfigProvider,
-  Button,
-} from "antd";
-import { RiDeleteBin6Line } from "react-icons/ri";
-import { FiEdit3 } from "react-icons/fi";
-import GetPageName from "../../../components/common/GetPageName";
-import SelectDuration from "../../../components/common/SelectDuration";
+  Card,
+  Row,
+  Col,
+  message,
+  Modal,
+  Form,
+  Select,
+  DatePicker,
+  ConfigProvider
+} from 'antd';
+import { 
+  SearchOutlined, 
+  MoreOutlined, 
+  ExportOutlined, 
+  FilterOutlined, 
+  SortAscendingOutlined,
+  SortDescendingOutlined,
+  DownloadOutlined,
+  DeleteOutlined
+} from '@ant-design/icons';
+import './UserManagement.css'; // For additional styling
+import { useNavigate } from 'react-router-dom';
 
-const originData = Array.from({ length: 20 }).map((_, i) => ({
-  key: i.toString(),
-  bookingID: `BKG-${1000 + i}`,
-  customername: `Edward ${i}`,
-  serviceProvider: `Provider ${i}`,
-  status: i % 2 === 0 ? "Confirmed" : "Pending",
-  scheduledTime: `2025-02-2${i} 10:00 AM`,
-  location: `London Park no. ${i}`,
-}));
+const { Text } = Typography;
+const { Option } = Select;
+const { RangePicker } = DatePicker;
 
-const EditableCell = ({
-  editing,
-  dataIndex,
-  title,
-  inputType,
-  children,
-  ...restProps
-}) => {
-  const inputNode = inputType === "number" ? <InputNumber /> : <Input />;
-  return (
-    <td {...restProps}>
-      {editing ? (
-        <Form.Item
-          name={dataIndex}
-          style={{ margin: 0 }}
-          rules={[{ required: true, message: `Please Input ${title}!` }]}
-        >
-          {inputNode}
-        </Form.Item>
-      ) : (
-        children
-      )}
-    </td>
-  );
-};
-
-const BookingListTable = () => {
-  const [form] = Form.useForm();
-  const [data, setData] = useState(originData);
-  const [searchText, setSearchText] = useState("");
-  const [editingKey, setEditingKey] = useState("");
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-
-  const isEditing = (record) => record.key === editingKey;
-
-  const edit = (record) => {
-    form.setFieldsValue({ ...record });
-    setEditingKey(record.key);
-  };
-
-  const cancel = () => setEditingKey("");
-
-  const save = async (key) => {
-    try {
-      const row = await form.validateFields();
-      const newData = [...data];
-      const index = newData.findIndex((item) => item.key === key);
-      if (index > -1) {
-        newData[index] = { ...newData[index], ...row };
-        setData(newData);
-      }
-      setEditingKey("");
-    } catch (errInfo) {
-      console.log("Validate Failed:", errInfo);
-    }
-  };
-
-  const handleDelete = (key) => {
-    setData(data.filter((item) => item.key !== key));
-  };
-
-  const filteredData = data.filter((item) =>
-    Object.values(item).some((val) =>
-      String(val).toLowerCase().includes(searchText.toLowerCase())
-    )
-  );
-
-  const columns = [
-    { title: "Booking ID", dataIndex: "bookingID", width: "10%" },
+const UserManagement = () => {
+  const router = useNavigate();
+  // Sample data
+  const initialData = [
     {
-      title: "Customer",
-      dataIndex: "customername",
-      width: "20%",
-      editable: true,
+      key: '1',
+      name: 'Angelique Morse',
+      email: 'benny18@yahoo.com',
+      phone: '+46 8 123 456',
+      address: 'Al Faisaliah Tower, King Fahd Road, Olaya District, Riyadh 11491',
+      status: 'Active',
+      createdAt: '2023-01-15',
     },
-    {
-      title: "Service Provider",
-      dataIndex: "serviceProvider",
-      width: "20%",
-      editable: true,
-    },
-    { title: "Status", dataIndex: "status", width: "10%", editable: true },
-    {
-      title: "Scheduled Time",
-      dataIndex: "scheduledTime",
-      width: "20%",
-      editable: true,
-    },
-    { title: "Location", dataIndex: "location", width: "25%", editable: true },
-    {
-      title: "Action",
-
-      dataIndex: "action",
-      render: (_, record) => {
-        const editable = isEditing(record);
-        return editable ? (
-          <span>
-            <Typography.Link
-              onClick={() => save(record.key)}
-              style={{ marginRight: 8 }}
-              className="text-[14px] text-blue-600"
-            >
-              Save
-            </Typography.Link>
-            <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
-              <a className="text-[14px] text-blue-600">Cancel</a>
-            </Popconfirm>
-          </span>
-        ) : (
-          <div className="flex items-center gap-4 w-36">
-            <button
-              disabled={editingKey !== ""}
-              onClick={() => edit(record)}
-              className=" hover:text-sky-600"
-            >
-              <FiEdit3 size={20} />
-            </button>
-            <Popconfirm
-              title="Are you sure to delete?"
-              onConfirm={() => handleDelete(record.key)}
-            >
-              <button className=" hover:text-red-600">
-                <RiDeleteBin6Line size={20} />
-              </button>
-            </Popconfirm>
-          </div>
-        );
-      },
-    },
+    // ... rest of the initial data
   ];
 
-  const mergedColumns = columns.map((col) => ({
-    ...col,
-    onCell: (record) =>
-      col.editable
-        ? {
-            inputType: "text",
-            dataIndex: col.dataIndex,
-            title: col.title,
-            editing: isEditing(record),
-          }
-        : undefined,
-  }));
+  // Generate more mock data for pagination demo
+  const generateMoreData = () => {
+    const additionalData = [];
+    for (let i = 11; i <= 100; i++) {
+      additionalData.push({
+        key: i.toString(),
+        name: `User ${i}`,
+        email: `user${i}@example.com`,
+        phone: '+46 8 123 456',
+        address: 'Al Faisaliah Tower, King Fahd Road, Olaya District, Riyadh 11491',
+        status: i % 3 === 0 ? 'Banned' : 'Active',
+        createdAt: `2023-${Math.floor(Math.random() * 12) + 1}-${Math.floor(Math.random() * 28) + 1}`,
+      });
+    }
+    return [...initialData, ...additionalData];
+  };
+
+  const allData = generateMoreData();
+
+  // State
+  const [data, setData] = useState(allData);
+  const [filteredData, setFilteredData] = useState(allData);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [searchText, setSearchText] = useState('');
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState(null);
+  const [sortField, setSortField] = useState('name');
+  const [sortOrder, setSortOrder] = useState('ascend');
+  const [isExportModalVisible, setIsExportModalVisible] = useState(false);
+  const [dateRange, setDateRange] = useState(null);
+  const [isBulkActionModalVisible, setIsBulkActionModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  
+  const [form] = Form.useForm();
+
+  // Effect to handle pagination
+  useEffect(() => {
+    const paginatedData = applyPagination(filteredData);
+    setData(paginatedData);
+  }, [currentPage, pageSize, filteredData]);
+
+  // Apply filters and sorting
+  useEffect(() => {
+    let result = [...allData];
+    
+    // Apply search filter
+    if (searchText) {
+      result = result.filter(item => 
+        item.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.email.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.address.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.phone.includes(searchText)
+      );
+    }
+    
+    // Apply status filter
+    if (statusFilter) {
+      result = result.filter(item => item.status === statusFilter);
+    }
+    
+    // Apply date range filter
+    if (dateRange) {
+      const [start, end] = dateRange;
+      result = result.filter(item => {
+        const itemDate = new Date(item.createdAt);
+        return itemDate >= start && itemDate <= end;
+      });
+    }
+    
+    // Apply sorting
+    if (sortField && sortOrder) {
+      result = result.sort((a, b) => {
+        if (sortOrder === 'ascend') {
+          return a[sortField].localeCompare(b[sortField]);
+        } else {
+          return b[sortField].localeCompare(a[sortField]);
+        }
+      });
+    }
+    
+    setFilteredData(result);
+  }, [searchText, statusFilter, dateRange, sortField, sortOrder]);
+
+  // Pagination logic
+  const applyPagination = (data) => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return data.slice(startIndex, endIndex);
+  };
+
+  // User click handler - logs the user ID
+
+
+  // Name click handler - logs the particular data
+  const handleNameClick = (record, e) => {
+    e.stopPropagation(); // Prevent row click from triggering
+    router(`/user-management/user-details/${record?.key}`)
+  };
+
+  // Filtering handler
+  const handleSearch = (value) => {
+    setSearchText(value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Status filter handler
+  const handleStatusFilter = (status) => {
+    setStatusFilter(status === 'all' ? null : status);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Sort handler
+  const handleSort = (field, order) => {
+    setSortField(field);
+    setSortOrder(order);
+  };
+
+  // Toggle sort order
+  const toggleSortOrder = () => {
+    setSortOrder(sortOrder === 'ascend' ? 'descend' : 'ascend');
+  };
+
+
+
+  // Bulk actions handler
+  const handleBulkAction = (action) => {
+    setLoading(true);
+    
+    // Simulate bulk action process
+    setTimeout(() => {
+      if (action === 'delete') {
+        message.success(`${selectedRowKeys.length} users deleted successfully`);
+      } else if (action === 'activate') {
+        message.success(`${selectedRowKeys.length} users activated successfully`);
+      } else if (action === 'ban') {
+        message.success(`${selectedRowKeys.length} users banned successfully`);
+      }
+      
+      setSelectedRowKeys([]);
+      setLoading(false);
+      setIsBulkActionModalVisible(false);
+    }, 1500);
+  };
+
+  // Row selection configuration
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (selectedKeys) => {
+      setSelectedRowKeys(selectedKeys);
+    },
+  };
+
+  // Action menu for each row
+  const actionMenu = (record) => (
+    <Menu>
+      <Menu.Item 
+        key="2" 
+        danger
+        onClick={() => {
+          Modal.confirm({
+            title: 'Are you sure you want to delete this user?',
+            content: 'This action cannot be undone.',
+            okText: 'Yes, Delete',
+            okType: 'danger',
+            cancelText: 'Cancel',
+            onOk() {
+              message.success(`User ${record.name} deleted successfully`);
+            },
+          });
+        }}
+      >
+        Delete
+      </Menu.Item>
+      <Menu.Item 
+        key="3"
+        onClick={() => {
+          const newStatus = record.status === 'Active' ? 'Banned' : 'Active';
+          message.success(`User status changed to ${newStatus}`);
+        }}
+      >
+        {record.status === 'Active' ? 'Ban User' : 'Activate User'}
+      </Menu.Item>
+    </Menu>
+  );
+
+  // Status filter menu
+  const statusMenu = (
+    <Menu onClick={({key}) => handleStatusFilter(key)}>
+      <Menu.Item key="all">All</Menu.Item>
+      <Menu.Item key="Active">Active</Menu.Item>
+      <Menu.Item key="Banned">Banned</Menu.Item>
+    </Menu>
+  );
+
+  // Sort menu
+  const sortMenu = (
+    <Menu>
+      <Menu.Item 
+        key="name" 
+        onClick={() => handleSort('name', 'ascend')}
+        icon={<SortAscendingOutlined />}
+      >
+        Sort by Name (A-Z)
+      </Menu.Item>
+      <Menu.Item 
+        key="name-desc" 
+        onClick={() => handleSort('name', 'descend')}
+        icon={<SortDescendingOutlined />}
+      >
+        Sort by Name (Z-A)
+      </Menu.Item>
+      <Menu.Item 
+        key="status" 
+        onClick={() => handleSort('status', 'ascend')}
+        icon={<SortAscendingOutlined />}
+      >
+        Sort by Status
+      </Menu.Item>
+      <Menu.Item 
+        key="date" 
+        onClick={() => handleSort('createdAt', 'ascend')}
+        icon={<SortAscendingOutlined />}
+      >
+        Sort by Newest
+      </Menu.Item>
+      <Menu.Item 
+        key="date-desc" 
+        onClick={() => handleSort('createdAt', 'descend')}
+        icon={<SortDescendingOutlined />}
+      >
+        Sort by Oldest
+      </Menu.Item>
+    </Menu>
+  );
+
+  // Bulk action menu
+  const bulkActionMenu = (
+    <Menu onClick={() => setIsBulkActionModalVisible(true)}>
+      <Menu.Item key="active">Activate Selected</Menu.Item>
+      <Menu.Item key="ban">Ban Selected</Menu.Item>
+      <Menu.Item key="delete" danger>Delete Selected</Menu.Item>
+    </Menu>
+  );
+
+  // Table columns
+  const columns = [
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      key: 'name',
+      sorter: true,
+      render: (text, record) => (
+        <div 
+          style={{ display: 'flex', alignItems: 'center', cursor:"pointer" }}
+          onClick={(e) => handleNameClick(record, e)}
+        >
+          <Avatar src={`https://randomuser.me/api/portraits/women/${parseInt(record.key) % 70 + 1}.jpg`} />
+          <div style={{ marginLeft: 12 }}>
+            <div>{text}</div>
+            <div style={{ fontSize: '12px', color: '#888' }}>{record.email}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Phone number',
+      dataIndex: 'phone',
+      key: 'phone',
+    },
+    {
+      title: 'Address',
+      dataIndex: 'address',
+      key: 'address',
+      ellipsis: true,
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      filters: [
+        { text: 'Active', value: 'Active' },
+        { text: 'Banned', value: 'Banned' },
+      ],
+      render: (status) => (
+        <Badge 
+          status={status === 'Active' ? 'success' : 'error'} 
+          text={status} 
+          style={{ 
+            color: status === 'Active' ? '#52c41a' : '#f5222d',
+            fontWeight: 'medium'
+          }} 
+        />
+      ),
+    },
+    {
+      title: '',
+      key: 'action',
+      render: (_, record) => (
+        <Dropdown overlay={() => actionMenu(record)} trigger={['click']}>
+          <Button type="text" icon={<MoreOutlined />} />
+        </Dropdown>
+      ),
+    },
+  ];
 
   return (
     <ConfigProvider
       theme={{
-        components: {
-          Table: {
-            rowSelectedBg: "#f6f6f6",
-            headerBg: "#f6f6f6",
-            headerSplitColor: "none",
-            headerBorderRadius: "none",
-            cellFontSize: "16px",
-          },
-          Pagination: {
-            borderRadius: "3px",
-            itemActiveBg: "#18a0fb",
-            // itemBg: "#000000",
-          },
-
-          Button: {
-            defaultHoverBg: "#18a0fb ",
-            defaultHoverColor: "white",
-            defaultHoverBorderColor: "#18a0fb ",
-          },
+        token: {
+          colorPrimary: '#F97316',
         },
       }}
     >
-      <div className="flex justify-between items-center py-5">
-        <h1 className="text-[20px] font-medium">{GetPageName()}</h1>
-        <div className="flex gap-4">
-          <Input
-            placeholder="Search in all columns"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            allowClear
-            style={{ width: 200, height: 40 }}
-          />
-          <SelectDuration />
+      <Card bodyStyle={{ padding: '0px' }}>
+        <div style={{ padding: '16px 24px', borderBottom: '1px solid #f0f0f0' }}>
+          <Row justify="space-between" align="middle">
+            <Col>
+              <Text strong style={{ fontSize: '18px' }}>User Management</Text>
+            </Col>
+            <Col>
+              <Space size="middle">
+                <Input 
+                  placeholder="Search..." 
+                  prefix={<SearchOutlined />} 
+                  onChange={(e) => handleSearch(e.target.value)}
+                  value={searchText}
+                  style={{ width: 200 }}
+                  allowClear
+                />
+                <Dropdown overlay={statusMenu}>
+                  <Button icon={<FilterOutlined />}>
+                    {statusFilter ? `Status: ${statusFilter}` : 'Filter'}
+                  </Button>
+                </Dropdown>
+                <Dropdown overlay={sortMenu}>
+                  <Button 
+                    icon={sortOrder === 'ascend' ? <SortAscendingOutlined /> : <SortDescendingOutlined />}
+                    onClick={toggleSortOrder}
+                  >
+                    Sort
+                  </Button>
+                </Dropdown>
+                <Button 
+                  type="primary" 
+                  icon={<ExportOutlined />}
+                  onClick={() => setIsExportModalVisible(true)}
+                >
+                  Export
+                </Button>
+                {selectedRowKeys.length > 0 && (
+                  <Dropdown overlay={bulkActionMenu}>
+                    <Button type="primary">
+                      Actions ({selectedRowKeys.length})
+                    </Button>
+                  </Dropdown>
+                )}
+              </Space>
+            </Col>
+          </Row>
         </div>
-      </div>
 
-      <Form form={form} component={false}>
-        <Table
-          rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
-          components={{ body: { cell: EditableCell } }}
-          bordered
-          dataSource={filteredData}
-          columns={mergedColumns}
-          rowClassName="editable-row"
+        <Table 
+          rowSelection={rowSelection}
+          columns={columns} 
+          dataSource={data}
+          loading={loading}
+         
           pagination={{
-            onChange: cancel,
-            defaultPageSize: 5,
-            position: ["bottomRight"],
-            size: "default",
-            total: 50,
+            current: currentPage,
+            pageSize: pageSize,
+            total: filteredData.length,
             showSizeChanger: true,
-            showQuickJumper: true,
+            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
+            onChange: (page) => setCurrentPage(page),
+            onShowSizeChange: (current, size) => {
+              setPageSize(size);
+              setCurrentPage(1); // Reset to first page when changing page size
+            }
           }}
+          onChange={(pagination, filters, sorter) => {
+            if (sorter && sorter.field) {
+              setSortField(sorter.field);
+              setSortOrder(sorter.order || 'ascend');
+            }
+            
+            if (filters && filters.status) {
+              setStatusFilter(filters.status[0]);
+            }
+          }}
+          size="middle"
+          scroll={{ x: 'max-content' }}
         />
-      </Form>
+      </Card>
     </ConfigProvider>
   );
 };
 
-export default BookingListTable;
+export default UserManagement;

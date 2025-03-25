@@ -69,11 +69,11 @@ p {
 
 .ant-menu-item .ant-menu-item-selected {
   /* background: linear-gradient(90deg, #440093 0%, #975cdb 100%) !important; */
-  background-color: #007ba5 !important;
+  background-color: #FF6600 !important;
   color: #222222 !important;
 }
 .ant-menu-item .ant-menu-item-active .ant-menu-item-selected {
-  background-color: #007ba5 !important;
+  background-color: #FF6600 !important;
   color: #ffffff !important;
 }
 .ant-menu-light .ant-menu-item-selected a {
@@ -90,11 +90,11 @@ p {
 } */
 
 .ant-menu-item-selected {
-  background-color: #e8f6ff !important;
-  color: #18a0fb !important;
+  background-color: #FF6600 !important;
+  color: #FFFFFF !important;
 }
 .ant-menu-light .ant-menu-item-selected a {
-  color: #18a0fb !important;
+  color: #FFFFFF !important;
 }
 .ant-menu-title-content {
   color: black !important;
@@ -237,3 +237,33 @@ p {
   color: #000 !important;
   border: none !important;
 }
+
+
+
+/* Custom CSS */
+.ant-checkbox-checked .ant-checkbox-inner {
+  background-color: #ff6347; /* Your desired primary color */
+  border-color: #ff6347;
+}
+.ant-checkbox-checked:focus .ant-checkbox-inner {
+  border-color: #ff6347;
+}
+
+
+
+
+
+/* For more advanced styling */
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #FF6600 !important;
+}
+
+.ant-tabs-ink-bar {
+  background: #FF6600 !important;
+}
+
+.ant-tabs-tab:hover {
+  color: #FF6600 !important;
+}
+
+

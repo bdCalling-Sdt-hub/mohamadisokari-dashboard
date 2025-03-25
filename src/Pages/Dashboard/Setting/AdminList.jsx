@@ -53,6 +53,7 @@ const AdminList = () => {
 
   const addFormRef = useRef(null);
   const editFormRef = useRef(null);
+  
 
   // Search functionality
   const handleSearch = (e) => {
@@ -159,7 +160,13 @@ const AdminList = () => {
   };
 
   return (
+ 
     <div className="w-[60%] bg-white rounded-lg shadow-lg p-5">
+        <ConfigProvider
+    theme={{
+      token: {
+        colorPrimary: '#F97316',
+      },}}>
       <TableHead
         searchText={searchText}
         handleSearch={handleSearch}
@@ -170,9 +177,21 @@ const AdminList = () => {
         onEdit={showEditModal}
         onDelete={showDeleteModal}
       />
+      </ConfigProvider>
 
-      {/* Add Admin Modal */}
-      <Modal
+      <ConfigProvider
+    theme={{
+      token: {
+        colorPrimary: '#F97316',
+      },
+
+      
+    }}
+  >
+
+
+ {/* Add Admin Modal */}
+ <Modal
         title="Add Admin"
         open={isAddModalOpen}
         onCancel={handleCancelAdd}
@@ -248,6 +267,7 @@ const AdminList = () => {
           </Form>
         </ConfigProvider>
       </Modal>
+  </ConfigProvider>
 
       {/* Edit Admin Modal */}
       <Modal
@@ -342,9 +362,11 @@ const AdminList = () => {
     </div>
   );
 };
+
+
 const TableHead = ({ searchText, handleSearch, onAdd }) => {
   return (
-    <div className="flex justify-between items-center mb-4">
+    <div className="flex items-center justify-between mb-4">
       <Input
         placeholder="Search admins..."
         value={searchText}
@@ -374,12 +396,12 @@ const DeleteAdmin = ({ name, onConfirm, onCancel }) => (
   <Flex
     vertical
     justify="space-between"
-    className="w-full h-full mb-3 mt-3"
+    className="w-full h-full mt-3 mb-3"
     gap={20}
   >
     <Flex align="center" justify="center">
       Are you sure you want to delete{" "}
-      <span className="font-bold ml-1">{name}</span>?
+      <span className="ml-1 font-bold">{name}</span>?
     </Flex>
     <div className="flex items-center justify-center gap-4">
       <ButtonEDU actionType="cancel" onClick={onCancel}>
@@ -417,4 +439,5 @@ const columns = (onEdit, onDelete) => [
     ),
   },
 ];
+
 export default AdminList;

@@ -1,29 +1,22 @@
-import { FaHandsHelping } from "react-icons/fa";
-import { FaDiagramProject, FaQuoteRight } from "react-icons/fa6";
-import { CgTemplate } from "react-icons/cg";
-import { Menu } from "antd";
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { FaQuoteRight } from "react-icons/fa";
+import { CgTemplate } from "react-icons/cg";
 import { LuClipboardList, LuGift } from "react-icons/lu";
 import { TbBellBolt, TbDashboard, TbListDetails } from "react-icons/tb";
-import { HiOutlineUsers, HiUsers } from "react-icons/hi";
+import { HiOutlineUsers } from "react-icons/hi";
 import { RxDashboard } from "react-icons/rx";
 import { PiMessengerLogoBold, PiWallet } from "react-icons/pi";
 import { FiLogOut, FiUsers } from "react-icons/fi";
 import { BiSolidCategoryAlt } from "react-icons/bi";
 import { TfiLayoutSlider, TfiLayoutSliderAlt } from "react-icons/tfi";
-import {
-  RiContactsBook3Line,
-  RiMoneyDollarCircleLine,
-  RiSettings5Line,
-} from "react-icons/ri";
-import {
-  MdHandyman,
-  MdOutlineHomeRepairService,
-  MdOutlineReportProblem,
-} from "react-icons/md";
-import { MdOutlinePrivacyTip } from "react-icons/md";
+import { RiContactsBook3Line, RiSettings5Line } from "react-icons/ri";
+import { MdHandyman, MdOutlineHomeRepairService, MdOutlineReportProblem, MdOutlinePrivacyTip } from "react-icons/md";
 import { IoDocumentTextOutline } from "react-icons/io5";
+import { Menu } from "antd";
+import { AiOutlineProduct, AiOutlineUsergroupAdd } from "react-icons/ai";
+import { GrTransaction } from "react-icons/gr";
+import { GoCodeReview } from "react-icons/go";
 
 const Sidebar = ({ isCollapsed }) => {
   const location = useLocation();
@@ -37,272 +30,208 @@ const Sidebar = ({ isCollapsed }) => {
     navigate("/auth/login");
   };
 
+  const getIcon = (key) => {
+    const icons = {
+      "/": <RxDashboard size={20} />,
+      "/user-management": <AiOutlineUsergroupAdd size={20} />,
+      "/product-details": <AiOutlineProduct size={20} />,
+      "/category": <LuGift size={20} />,
+      "/app-review": <GoCodeReview size={20} />,
+      "/transaction": <GrTransaction size={20} />,
+      "/reported-issues": <MdOutlineReportProblem size={20} />,
+      "/support-chat": <PiMessengerLogoBold size={20} />,
+      "/pushnotification": <TbBellBolt size={20} />,
+      "/privacy-policy": <MdOutlinePrivacyTip size={20} />,
+      "/terms-and-conditions": <IoDocumentTextOutline size={20} />,
+      "/faq": <FaQuoteRight size={20} />,
+      "/contact": <RiContactsBook3Line size={20} />,
+      "/slider": <TfiLayoutSlider size={20} />,
+      "/onboarding-screen": <TfiLayoutSliderAlt size={20} />,
+      "/admin-list": <RiSettings5Line size={20} />,
+      "/logout": <FiLogOut size={20} />,
+    };
+    return icons[key] || <TbListDetails size={20} />;
+  };
+
   const menuItems = [
     {
       key: "/",
-      icon: <RxDashboard size={24} />,
+      icon: getIcon("/"),
       label: <Link to="/">Overview</Link>,
     },
     {
-      key: "/booking-list",
-      icon: <LuClipboardList size={25} />,
-      label: isCollapsed ? (
-        <Link to="/booking-list">Bookings</Link>
-      ) : (
-        <Link to="/booking-list">Bookings</Link>
-      ),
+      key: "/user-management",
+      icon: getIcon("/user-management"),
+      label: <Link to="/user-management">User Management</Link>,
     },
     {
-      key: "subMenuSetting2",
-      icon: <HiOutlineUsers size={24} className="text-black" />,
-      label: "User",
-      children: [
-        {
-          key: "/customer-list",
-          icon: <HiUsers size={23} />,
-          label: isCollapsed ? (
-            <Link to="/customer-list">customer</Link>
-          ) : (
-            <Link to="/customer-list">customer</Link>
-          ),
-        },
-        {
-          key: "/service-provider-list",
-          icon: <FaHandsHelping size={24} />,
-          label: isCollapsed ? (
-            <Link to="/service-provider-list">serviceproviders</Link>
-          ) : (
-            <Link to="/service-provider-list">serviceproviders</Link>
-          ),
-        },
-      ],
+      key: "/product-details",
+      icon: getIcon("/product-details"),
+      label: <Link to="/product-details">Product Management</Link>,
     },
     {
-      key: "/discount-coupon",
-      icon: <LuGift size={25} />,
-      label: isCollapsed ? (
-        <Link to="/discount-coupon">Discount Coupon</Link>
-      ) : (
-        <Link to="/discount-coupon">Discount Coupon</Link>
-      ),
+      key: "/category",
+      icon: getIcon("/category"),
+      label: <Link to="/category">Category</Link>,
+    },
+    {
+      key: "/app-review",
+      icon: getIcon("/app-review"),
+      label: <Link to="/app-review">App Reviews</Link>,
     },
     {
       key: "/transaction",
-      icon: <PiWallet size={25} />,
-      label: isCollapsed ? (
-        <Link to="/transaction">Transaction</Link>
-      ) : (
-        <Link to="/transaction">Transaction</Link>
-      ),
+      icon: getIcon("/transaction"),
+      label: <Link to="/transaction">Transaction</Link>,
     },
     {
       key: "/reported-issues",
-      icon: <MdOutlineReportProblem size={25} />,
-      label: isCollapsed ? (
-        <Link to="/reported-issues">Report</Link>
-      ) : (
-        <Link to="/reported-issues">Report</Link>
-      ),
+      icon: getIcon("/reported-issues"),
+      label: <Link to="/reported-issues">Report</Link>,
     },
-    {
-      key: "subMenuSetting3",
-      icon: <MdOutlineHomeRepairService size={24} className="text-black" />,
-      label: "Service",
-      children: [
-        {
-          key: "/category-list",
-          icon: <BiSolidCategoryAlt size={23} />,
-          label: isCollapsed ? (
-            <Link to="/category-list">Category List</Link>
-          ) : (
-            <Link to="/category-list">Category List</Link>
-          ),
-        },
-        {
-          key: "/service-list",
-          icon: <MdHandyman size={24} />,
-          label: isCollapsed ? (
-            <Link to="/service-list">Service List</Link>
-          ) : (
-            <Link to="/service-list">Service List</Link>
-          ),
-        },
-      ],
-    },
-    // {
-
-    // {
-    //     key: "/users",
-    //     icon: <HiUserGroup size={24} />,
-    //     label: <Link to="/users">User</Link>
-    // },
-
-    /* {
-            key: "/admin",
-            icon: <MdOutlineAdminPanelSettings size={24} />,
-            label: <Link to="/admin">Make Admin</Link>
-        }, */
-
-    // {
-    //     key: "/sub-category",
-    //     icon: <BiSolidCategory size={24} />,
-    //     label: <Link to="/sub-category" >Sub Category</Link>
-    // },
     {
       key: "/support-chat",
-      icon: <PiMessengerLogoBold size={24} />,
+      icon: getIcon("/support-chat"),
       label: <Link to="/support-chat">Support Chat</Link>,
     },
     {
       key: "/pushnotification",
-      icon: <TbBellBolt size={24} />,
+      icon: getIcon("/pushnotification"),
       label: <Link to="/pushnotification">PushNotification</Link>,
     },
     {
       key: "subMenuSetting",
-      icon: <CgTemplate size={24} />,
+      icon: getIcon("/privacy-policy"),
       label: "Cms",
       children: [
         {
           key: "/privacy-policy",
-
-          icon: <MdOutlinePrivacyTip size={24} />,
-          label: (
-            <Link to="/privacy-policy" className="text-white hover:text-white">
-              Privacy Policy
-            </Link>
-          ),
+          icon: getIcon("/privacy-policy"),
+          label: <Link to="/privacy-policy">Privacy Policy</Link>,
         },
         {
           key: "/terms-and-conditions",
-          icon: <IoDocumentTextOutline size={24} />,
-          label: (
-            <Link
-              to="/terms-and-conditions"
-              className="text-white hover:text-white"
-            >
-              Terms And Condition
-            </Link>
-          ),
+          icon: getIcon("/terms-and-conditions"),
+          label: <Link to="/terms-and-conditions">Terms And Condition</Link>,
         },
         {
           key: "/faq",
-          icon: <FaQuoteRight size={24} />,
-          label: (
-            <Link to="/faq" className="text-white hover:text-white">
-              FAQ
-            </Link>
-          ),
+          icon: getIcon("/faq"),
+          label: <Link to="/faq">FAQ</Link>,
         },
         {
           key: "/contact",
-          icon: <RiContactsBook3Line size={24} />,
-          label: (
-            <Link to="/contact" className="text-white hover:text-white">
-              Contact Us
-            </Link>
-          ),
+          icon: getIcon("/contact"),
+          label: <Link to="/contact">Contact Us</Link>,
         },
         {
           key: "/slider",
-
-          icon: <TfiLayoutSlider size={24} />,
-          label: (
-            <Link to="/slider" className="text-white hover:text-white">
-              SLider
-            </Link>
-          ),
+          icon: getIcon("/slider"),
+          label: <Link to="/slider">Slider</Link>,
         },
         {
           key: "/onboarding-screen",
-
-          icon: <TfiLayoutSliderAlt size={24} />,
-          label: (
-            <Link
-              to="/onboarding-screen"
-              className="text-white hover:text-white"
-            >
-              Onboarding Screen
-            </Link>
-          ),
+          icon: getIcon("/onboarding-screen"),
+          label: <Link to="/onboarding-screen">Onboarding Screen</Link>,
         },
       ],
     },
-
     {
       key: "/admin-list",
-      icon: <RiSettings5Line size={24} />,
-      label: isCollapsed ? (
-        <Link to="/admin-list">setting</Link>
-      ) : (
-        <Link to="/admin-list">setting</Link>
-      ),
+      icon: getIcon("/admin-list"),
+      label: <Link to="/admin-list">Setting</Link>,
     },
     {
       key: "/logout",
-      icon: <FiLogOut size={24} />,
-      label: isCollapsed ? null : (
-        <p onClick={handleLogout} className="text-black hover:text-black">
-          Logout
-        </p>
-      ),
+      icon: getIcon("/logout"),
+      label: isCollapsed ? null : <span onClick={handleLogout}>Logout</span>,
     },
-
-    // {
-    //   key: "/subscription",
-    //   icon: <HiTicket size={24} />,
-    //   label: <Link to="/subscription">Subscription</Link>,
-    // },
   ];
 
   useEffect(() => {
-    const selectedItem = menuItems.find(
-      (item) =>
-        item.key === path || item.children?.some((sub) => sub.key === path)
-    );
-
-    if (selectedItem) {
-      setSelectedKey(path);
-
-      if (selectedItem.children) {
-        setOpenKeys([selectedItem.key]);
-      } else {
-        const parentItem = menuItems.find((item) =>
-          item.children?.some((sub) => sub.key === path)
-        );
-        if (parentItem) {
-          setOpenKeys([parentItem.key]);
+    const findSelectedKey = (items, currentPath) => {
+      for (const item of items) {
+        if (item.key === currentPath) {
+          return { selectedKey: item.key, openKeys: [] };
+        }
+        if (item.children) {
+          const childMatch = item.children.find(child => child.key === currentPath);
+          if (childMatch) {
+            return { selectedKey: childMatch.key, openKeys: [item.key] };
+          }
         }
       }
-    }
+      return { selectedKey: "", openKeys: [] };
+    };
+
+    const { selectedKey: newSelectedKey, openKeys: newOpenKeys } = findSelectedKey(menuItems, path);
+    setSelectedKey(newSelectedKey);
+    setOpenKeys(newOpenKeys);
   }, [path]);
-  // useEffect(() => {
-  //   setSelectedKey(path);
-  // }, [path]);
+
+  const onOpenChange = (keys) => {
+    const latestOpenKey = keys.find(key => openKeys.indexOf(key) === -1);
+    setOpenKeys(latestOpenKey ? [latestOpenKey] : []);
+  };
 
   return (
-    <div
-      className={`bg-quilocoP h-full shadow-md transition-all duration-300 ${
-        isCollapsed ? "w-[80px]" : "w-[280px]"
-      }`}
-    >
-      <Link to="/" className="flex items-center justify-center py-4 text-white">
-        <div className="w-full flex items-center justify-center bg-quilocoP px-4 py-3 -mt-1.5 gap-3 rounded-lg">
-          <TbDashboard size={40} className="text-sky-500" />
+    <div className={`bg-quilocoP flex flex-col h-screen ${isCollapsed ? "w-[80px]" : "w-[280px]"}`}>
+      {/* Fixed Header */}
+      <Link 
+        to="/" 
+        className="sticky top-0 z-10 flex items-center justify-start px-2 py-4 text-white bg-quilocoP"
+        style={{ minHeight: '64px' }}
+      >
+        <div className="flex items-center justify-start gap-3 px-4 ">
+          <TbDashboard size={40} className="text-[#F97316]" />
           {!isCollapsed && (
-            <p className="text-2xl text-sky-500 font-semibold ">Dashboard</p>
+            <p className="text-2xl font-semibold text-[#F97316]">Dashboard</p>
           )}
-          {/* <img src={"qilocoLogo"} /> */}
         </div>
       </Link>
 
-      <Menu
-        mode="inline"
-        selectedKeys={[selectedKey]}
-        style={{ background: "#ffffff" }}
-        items={menuItems}
-        className="text-white mt-10"
-      />
+      {/* Scrollable Menu */}
+      <div 
+        className="flex-1 pt-10 overflow-y-auto" 
+        style={{ 
+          scrollbarWidth: 'thin',
+          scrollbarGutter: 'stable',
+        }}
+      >
+        <style>
+          {`
+            .overflow-y-auto::-webkit-scrollbar {
+              width: 5px;
+              height: 5px;
+            }
+            .overflow-y-auto::-webkit-scrollbar-track {
+              background: transparent;
+            }
+            .overflow-y-auto::-webkit-scrollbar-thumb {
+              background: #888;
+              border-radius: 5px;
+            }
+            .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+              background: #555;
+            }
+          `}
+        </style>
+        
+        <Menu
+          mode="inline"
+          selectedKeys={[selectedKey]}
+          openKeys={openKeys}
+          onOpenChange={onOpenChange}
+          style={{ 
+            background: "#ffffff",
+            borderRight: 0,
+            paddingBottom:"10px",
+            height: '100%',
+          }}
+          items={menuItems}
+          className="text-white"
+        />
+      </div>
     </div>
   );
 };

@@ -41,7 +41,14 @@ function PushNotification() {
 
   return (
     <>
-      <div className="p-10 bg-white shadow-md rounded-md max-w-lg mx-auto">
+      <ConfigProvider
+          theme={{
+            token: {
+              colorPrimary: '#F97316',
+            },
+          }}
+        >
+      <div className="max-w-lg p-10 mx-auto bg-white rounded-md shadow-md">
         <h1 className="text-[24px] font-semibold mb-4 border-b-2">
           Send Push Notification
         </h1>
@@ -79,26 +86,13 @@ function PushNotification() {
               />
             </Form.Item>
 
-            {/* Recipient Type Dropdown */}
-            <Form.Item label="Select Recipient Type" name="recipient">
-              <Dropdown
-                overlay={<Menu onClick={handleMenuClick} items={items} />}
-                trigger={["click"]}
-                className="h-11"
-              >
-                <Button className="w-full text-left bg-gradient-to-b from-sky-50 via-white to-sky-50 ">
-                  {selectedRecipient}
-                  <IoMdArrowDropdown size={20} />
-                </Button>
-              </Dropdown>
-            </Form.Item>
-
+            
             {/* Submit Button */}
             <Form.Item>
               <Button
                 type="block"
                 htmlType="submit"
-                className="w-full bg-smart hover:bg-smart/90 text-white h-11 text-base gap-4"
+                className="w-full gap-4 text-base text-white bg-smart hover:bg-smart/90 h-11"
               >
                 Send Notification
                 <FaRegPaperPlane />
@@ -107,6 +101,7 @@ function PushNotification() {
           </Form>
         </ConfigProvider>
       </div>
+      </ConfigProvider>
     </>
   );
 }

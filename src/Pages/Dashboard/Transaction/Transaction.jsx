@@ -1,287 +1,355 @@
-import React, { useState } from "react";
-import { Table, Avatar, ConfigProvider, Input, Button } from "antd";
-import { SearchOutlined, DeleteOutlined } from "@ant-design/icons";
+// TransactionTable.jsx
+import React, { useState } from 'react';
+import { Table, Checkbox, Button, Select, Dropdown, Space, ConfigProvider } from 'antd';
+import { AiOutlineEye, AiOutlineDown, AiOutlineUp, AiOutlineFilter } from 'react-icons/ai';
+import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
+import './TransactionTable.css';
 
-import { RiDeleteBin6Line } from "react-icons/ri";
-import { IoEye } from "react-icons/io5";
+const TransactionTable = () => {
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState(null);
+  const [sortOrder, setSortOrder] = useState(null);
+  const [filterVisible, setFilterVisible] = useState(false);
 
-import GetPageName from "../../../components/common/GetPageName";
-import { LuDownload } from "react-icons/lu";
-
-// UserAvatar Component
-const UserAvatar = ({ shop }) => (
-  <div className="flex gap-2 items-center">
-    <Avatar shape="circle" size={30} src={"shop"} />
-    <p>John Doe</p>
-  </div>
-);
-
-// Sample Data
-const initialData = [
-  {
-    key: 1,
-    date: "2021-09-01",
-    customername: "",
-    name: "John Lennon",
-    bookingID: "#1214454",
-    ammount: 5,
-    status: "Sent",
-  },
-  {
-    key: 2,
-    date: "2021-10-15",
-    customername: "",
-    name: "Paul McCartney",
-    bookingID: "#121idj54",
-    ammount: 10,
-    status: "Pending",
-  },
-  {
-    key: 3,
-    date: "2021-10-15",
-    customername: "",
-    name: "George Harrison",
-    bookingID: "#1256789",
-    ammount: 15,
-    status: "Pending",
-  },
-  {
-    key: 4,
-    date: "2021-11-20",
-    customername: "",
-    name: "Ringo Starr",
-    bookingID: "#1239874",
-    ammount: 20,
-    status: "Sent",
-  },
-  {
-    key: 5,
-    date: "2021-11-20",
-    customername: "",
-    name: "Ringo Starr",
-    bookingID: "#1239874",
-    ammount: 20,
-    status: "Unpaid",
-  },
-];
-
-function Transaction() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [data, setData] = useState(initialData);
-
-  // Handle search input change
-  const handleSearch = (value) => setSearchQuery(value);
-
-  // Filter data based on search query
-  const filteredData = data.filter(({ customername, ...transaction }) =>
-    Object.entries(transaction).some(([key, value]) => {
-      if (key === "date") {
-        return new Date(value).toLocaleDateString().includes(searchQuery);
-      }
-      if (key === "ammount") {
-        return value.toString().includes(searchQuery);
-      }
-      return (
-        typeof value === "string" &&
-        value.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    })
-  );
-  // Handle row selection
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (keys) => setSelectedRowKeys(keys),
+  // Sample data
+  const generateData = () => {
+    return Array(1000).fill().map((_, index) => ({
+      key: index,
+      date: '22 Feb 25',
+      transactionId: `T${2000 + index}`,
+      sellerName: 'Angelique Morse',
+      product: 'Smartphone',
+      amount: 500 + Math.floor(Math.random() * 500),
+      platformShare: 50 + Math.floor(Math.random() * 50),
+      platformSharePercentage: 10,
+    }));
   };
 
-  // Handle delete function
-  const handleDelete = () => {
-    // Delete only the selected rows
-    setData(data.filter((item) => !selectedRowKeys.includes(item.key)));
-    setSelectedRowKeys([]);
+  const [data, setData] = useState(generateData());
+
+  // Function to handle bulk delete
+  const handleBulkDelete = () => {
+    if (selectedRows.length === 0) return;
+    
+    const newData = data.filter(item => !selectedRows.includes(item.key));
+    setData(newData);
+    setSelectedRows([]);
   };
 
-  // Columns Definition
+  // Function to handle sorting
+  const handleSort = (field) => {
+    let order = 'asc';
+    
+    // If already sorting by this field, toggle the direction
+    if (sortField === field) {
+      order = sortOrder === 'asc' ? 'desc' : 'asc';
+    }
+    
+    setSortField(field);
+    setSortOrder(order);
+    
+    const sortedData = [...data].sort((a, b) => {
+      if (order === 'asc') {
+        return a[field] > b[field] ? 1 : -1;
+      } else {
+        return a[field] < b[field] ? 1 : -1;
+      }
+    });
+    
+    setData(sortedData);
+  };
+
+  // Filter menu items
+  const getFilterMenu = (field) => ({
+    items: [
+      {
+        key: '1',
+        label: (
+          <div onClick={() => handleSort(field)}>
+            <Space>
+              <AiOutlineUp /> Ascending
+            </Space>
+          </div>
+        ),
+      },
+      {
+        key: '2',
+        label: (
+          <div onClick={() => handleSort(field)}>
+            <Space>
+              <AiOutlineDown /> Descending
+            </Space>
+          </div>
+        ),
+      },
+    ],
+  });
+
   const columns = [
     {
-      title: "Date",
-      dataIndex: "date",
-      key: "date",
-      render: (date) => <p>{new Date(date).toLocaleDateString()}</p>,
+      title: '',
+      dataIndex: 'checkbox',
+      key: 'checkbox',
+      width: 50,
+      render: (_, record) => (
+        <Checkbox
+          checked={selectedRows.includes(record.key)}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setSelectedRows([...selectedRows, record.key]);
+            } else {
+              setSelectedRows(selectedRows.filter(key => key !== record.key));
+            }
+          }}
+        />
+      )
     },
     {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
-      render: (name) => <UserAvatar user={name} />,
+      title: (
+        <div className="column-header">
+          Date
+          <Dropdown menu={getFilterMenu('date')} trigger={['click']}>
+            <Button type="text" size="small" className="filter-button">
+              <AiOutlineFilter />
+            </Button>
+          </Dropdown>
+        </div>
+      ),
+      dataIndex: 'date',
+      key: 'date',
+      sorter: true,
     },
     {
-      title: "Bookinng ID",
-      dataIndex: "bookingID",
-      key: "bookingID",
+      title: (
+        <div className="column-header">
+          Transaction ID
+          <Dropdown menu={getFilterMenu('transactionId')} trigger={['click']}>
+            <Button type="text" size="small" className="filter-button">
+              <AiOutlineFilter />
+            </Button>
+          </Dropdown>
+        </div>
+      ),
+      dataIndex: 'transactionId',
+      key: 'transactionId',
+      sorter: true,
     },
     {
-      title: "Ammount",
-      dataIndex: "ammount",
-      key: "ammount",
-      // defaultSortOrder: "descend",
-      sorter: (a, b) => a.ammount - b.ammount,
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => (
-        <p
-          className={`${
-            status.charAt(0).toLocaleUpperCase() ===
-            "Sent".charAt(0).toLocaleUpperCase()
-              ? "text-green-500 bg-green-50 border border-green-500 w-20 px-1.5 py-0.5 rounded-lg"
-              : status.charAt(0).toUpperCase() ===
-                "Paid".charAt(0).toLocaleUpperCase()
-              ? "text-sky-500 bg-sky-50 border border-sky-500 w-20 px-1.5 py-0.5 rounded-lg"
-              : "text-red-500 bg-red-50 border border-red-500 w-20 px-1.5 py-0.5 rounded-lg"
-          }`}
-        >
-          {status}
-        </p>
+      title: (
+        <div className="column-header">
+          Seller Name
+          <Dropdown menu={getFilterMenu('sellerName')} trigger={['click']}>
+            <Button type="text" size="small" className="filter-button">
+              <AiOutlineFilter />
+            </Button>
+          </Dropdown>
+        </div>
+      ),
+      dataIndex: 'sellerName',
+      key: 'sellerName',
+      sorter: true,
+      render: (text) => (
+        <div className="seller-info">
+          <div className="avatar">
+            <img src="https://i.ibb.co.com/QF3711qv/Frame-2147226793.png" alt="Seller avatar" />
+          </div>
+          <span>{text}</span>
+        </div>
       ),
     },
     {
-      title: "Actions",
-      key: "action",
-      render: (_, record) => (
-        <div className="flex gap-4">
-          <IoEye
-            style={{ fontSize: 24 }}
-            className="text-black hover:text-blue-500 cursor-pointer"
-          />
-          <RiDeleteBin6Line
-            style={{ fontSize: 24 }}
-            className="text-black hover:text-red-500 cursor-pointer"
-            onClick={() =>
-              setData(data.filter((item) => item.key !== record.key))
-            }
-          />
+      title: (
+        <div className="column-header">
+          Product
+          <Dropdown menu={getFilterMenu('product')} trigger={['click']}>
+            <Button type="text" size="small" className="filter-button">
+              <AiOutlineFilter />
+            </Button>
+          </Dropdown>
         </div>
+      ),
+      dataIndex: 'product',
+      key: 'product',
+      sorter: true,
+    },
+    {
+      title: (
+        <div className="column-header">
+          Amount
+          <Dropdown menu={getFilterMenu('amount')} trigger={['click']}>
+            <Button type="text" size="small" className="filter-button">
+              <AiOutlineFilter />
+            </Button>
+          </Dropdown>
+        </div>
+      ),
+      dataIndex: 'amount',
+      key: 'amount',
+      sorter: true,
+      render: (amount) => `$${amount}`,
+    },
+    {
+      title: (
+        <div className="column-header">
+          Platform Share
+          <Dropdown menu={getFilterMenu('platformShare')} trigger={['click']}>
+            <Button type="text" size="small" className="filter-button">
+              <AiOutlineFilter />
+            </Button>
+          </Dropdown>
+        </div>
+      ),
+      dataIndex: 'platformShare',
+      key: 'platformShare',
+      sorter: true,
+      render: (share, record) => `$${share} (${record.platformSharePercentage}%)`,
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      render: (_, record) => (
+        <Button 
+          type="text" 
+          icon={<AiOutlineEye size={18} />} 
+          className="eye-button"
+          onClick={() => {
+            // Single delete functionality
+            setData(data.filter(item => item.key !== record.key));
+          }}
+        />
       ),
     },
   ];
 
-  return (
-    <ConfigProvider
-      theme={{
-        components: {
-          Table: {
-            rowSelectedBg: "#f6f6f6",
-            headerBg: "#f6f6f6",
-            headerSplitColor: "none",
-            headerBorderRadius: "none",
-          },
-          Pagination: {
-            borderRadius: "3px",
-            itemActiveBg: "#18a0fb",
-            // itemBg: "#000000",
-          },
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      // Get all keys from current page
+      const currentKeys = paginatedData.map(item => item.key);
+      setSelectedRows(currentKeys);
+    } else {
+      setSelectedRows([]);
+    }
+  };
 
-          Button: {
-            defaultHoverBg: "#18a0fb ",
-            defaultHoverColor: "white",
-            defaultHoverBorderColor: "#18a0fb ",
-          },
-        },
-      }}
-    >
-      <Head
-        onSearch={handleSearch}
-        pagename="Transactions"
-        selectedRowKeys={selectedRowKeys}
-        handleDelete={handleDelete}
-        filteredData={filteredData}
-      />
-
-      <Table
-        columns={columns}
-        rowSelection={rowSelection}
-        dataSource={filteredData}
-        pagination={{
-          defaultPageSize: 5,
-          position: ["bottomRight"],
-          size: "default",
-          total: 50,
-          showSizeChanger: true,
-          showQuickJumper: true,
-        }}
-        showSorterTooltip={{
-          target: "sorter-icon",
-        }}
-      />
-    </ConfigProvider>
+  // Calculate current page data
+  const paginatedData = data.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
   );
-}
 
-export default Transaction;
+  // Custom table header with select all checkbox
+  const tableHeader = () => (
+    <div className="custom-table-header">
+      <Checkbox 
+        onChange={handleSelectAll}
+        checked={
+          paginatedData.length > 0 &&
+          paginatedData.every(item => selectedRows.includes(item.key))
+        }
+      />
+      <span className="header-title">Transaction</span>
+      <div className="header-actions">
+        {selectedRows.length > 0 && (
+          <Button 
+            type="primary" 
+            danger
+            onClick={handleBulkDelete}
+            style={{ marginRight: '10px' }}
+          >
+            Bulk Delete ({selectedRows.length})
+          </Button>
+        )}
+        <Dropdown 
+          menu={{
+            items: [
+              {
+                key: '1',
+                label: 'Sort by Date (Ascending)',
+                onClick: () => handleSort('date'),
+              },
+              {
+                key: '2',
+                label: 'Sort by Date (Descending)',
+                onClick: () => handleSort('date'),
+              },
+              {
+                key: '3',
+                label: 'Sort by Amount (Ascending)',
+                onClick: () => handleSort('amount'),
+              },
+              {
+                key: '4',
+                label: 'Sort by Amount (Descending)',
+                onClick: () => handleSort('amount'),
+              },
+            ],
+          }} 
+          trigger={['click']}
+        >
+          <Button style={{border:"1px solid gray",padding:"10px", fontWeight:"unset"}} type="text">
+            <Space>
+              Short
+              <AiOutlineDown />
+            </Space>
+          </Button>
+        </Dropdown>
+      </div>
+    </div>
+  );
 
-// Head Component (for Search Bar and Delete Button)
-function Head({ onSearch, selectedRowKeys, handleDelete, filteredData }) {
   return (
     <ConfigProvider
       theme={{
-        components: {
-          Table: {
-            rowSelectedBg: "#f6f6f6",
-            headerBg: "#f6f6f6",
-            headerSplitColor: "none",
-            headerBorderRadius: "none",
-          },
-          Pagination: {
-            borderRadius: "3px",
-            itemActiveBg: "#18a0fb",
-            // itemBg: "#000000",
-          },
-
-          Button: {
-            defaultHoverBg: "#18a0fb ",
-            defaultHoverColor: "white",
-            defaultHoverBorderColor: "#18a0fb ",
-          },
+        token: {
+          colorPrimary: '#F97316',
         },
       }}
     >
-      <div className="flex justify-between items-center py-5">
-        <h1 className="text-[20px] font-medium">{GetPageName()}</h1>
-
-        <div className="flex gap-3 items-center">
-          <Input
-            placeholder="Search by Recipient, Ocation, Price, or Status"
-            onChange={(e) => onSearch(e.target.value)}
-            prefix={<SearchOutlined />}
-            // style={{ width: 200, height: 41 }}
-            className="h-9 gap-2"
-            allowClear
-          />
-
-          {/* Show delete button only if more than one row is selected */}
-
-          {selectedRowKeys.length > 1 && (
-            <Button
-              onClick={handleDelete}
-              icon={<DeleteOutlined />}
-              className="bg-[#18a0fb] text-white border-none h-9"
-            >
-              {selectedRowKeys.length === filteredData.length
-                ? "Delete All"
-                : "Delete Selected"}
-            </Button>
-          )}
-          <Button
-            icon={<LuDownload size={20} />}
-            className="bg-[#f1f1f1] hover:bg-smart text-black border h-9"
+    <div className="transaction-table-container">
+      {tableHeader()}
+      <div className="table-container">
+        <Table 
+          columns={columns}
+          dataSource={paginatedData}
+          pagination={false}
+          rowClassName="transaction-row"
+          onChange={(pagination, filters, sorter) => {
+            if (sorter && sorter.field) {
+              handleSort(sorter.field);
+            }
+          }}
+        />
+      </div>
+      <div className="pagination-container">
+        <div className="page-info">
+          {data.length > 0 ? 
+            `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, data.length)} of ${data.length}` 
+            : 'No data'}
+        </div>
+        <div className="flex items-center gap-1 pagination-controls">
+          <Button 
+            type="text" 
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(currentPage - 1)}
+            className="pagination-button"
           >
-            Export
+           <IoIosArrowBack size={22} />
+          </Button>
+          <Button 
+            type="text" 
+            disabled={currentPage * pageSize >= data.length}
+            onClick={() => setCurrentPage(currentPage + 1)}
+            className="pagination-button"
+          >
+            <IoIosArrowForward size={22} />
           </Button>
         </div>
       </div>
+    </div>
     </ConfigProvider>
   );
-}
+};
+
+export default TransactionTable;

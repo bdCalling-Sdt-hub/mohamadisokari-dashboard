@@ -1,0 +1,34 @@
+/* UserManagement.css */
+.ant-table-thead > tr > th {
+    background-color: #fafafa;
+    font-weight: 500;
+    color: #666;
+  }
+  
+  .ant-table-tbody > tr > td {
+    padding: 16px 16px;
+  }
+  
+  .ant-pagination {
+    margin: 16px 24px !important;
+  }
+  
+  .ant-table-wrapper {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .ant-btn-text:hover, .ant-btn-text:focus {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+  
+  /* Custom checkbox style for table */
+  .ant-checkbox-checked .ant-checkbox-inner {
+    background-color: #1890ff;
+    border-color: #1890ff;
+  }
+  
+  /* Style for the avatar */
+  .ant-avatar {
+    border: 1px solid #f0f0f0;
+  }

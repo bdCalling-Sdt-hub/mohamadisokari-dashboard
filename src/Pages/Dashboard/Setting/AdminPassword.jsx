@@ -36,9 +36,12 @@ function AdminPassword() {
   return (
     <ConfigProvider
       theme={{
+        token: {
+          colorPrimary: '#F97316',
+        },
         components: {
           Card: {
-            headerBg: "#18a0fb",
+            headerBg: "#F97316",
             headerHeight: "30px",
             headerPadding: "5px",
           },
@@ -63,7 +66,7 @@ function AdminPassword() {
           <Form
             form={form}
             layout="vertical"
-            className="h-auto flex flex-col items-center justify-evenly"
+            className="flex flex-col items-center h-auto justify-evenly"
           >
             {/* Current Password */}
             <Form.Item

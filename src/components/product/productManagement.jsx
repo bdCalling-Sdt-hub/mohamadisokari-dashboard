@@ -1,7 +1,8 @@
 import React from "react";
-import BookigListTable from "./BookigListTable";
-import TopDistrict from "../Home/TopDistrict";
-import UserAnalysis from "./UserAnalysis";
+import ProductManagementTable from "./ProductManagementTable";
+import UserAnalysis from "../../Pages/Dashboard/Booking/UserAnalysis";
+import TopDistrict from "../../Pages/Dashboard/Home/TopDistrict";
+import TopCategory from "./TopCategory";
 function BookingList() {
 
   return (
@@ -10,7 +11,8 @@ function BookingList() {
         <UserAnalysis />
         <TopDistrict />
       </div>
-      <BookigListTable />
+      <ProductManagementTable />
+      <TopCategory />
     </div>
   );
 }

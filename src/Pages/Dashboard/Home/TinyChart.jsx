@@ -28,7 +28,7 @@ function TinyChart(props) {
   }
 
   return (
-    <div className="w-40 h-10 flex items-center justify-end ">
+    <div className="flex items-center justify-end w-40 h-10 ">
       <ResponsiveContainer>
         <BarChart data={data} margin={{ top: 5, left: 20, bottom: 5 }}>
           <Bar dataKey="pv" fill={`${props.color}`} barSize={35} radius={4} />

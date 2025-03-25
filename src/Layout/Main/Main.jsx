@@ -11,14 +11,14 @@ const Main = () => {
   };
 
   return (
-    <div className="h-screen w-screen flex bg-white overflow-hidden">
+    <div className="flex w-screen h-screen overflow-hidden bg-white">
       {/* Sidebar */}
       <Sidebar isCollapsed={isCollapsed} />
 
       {/* Main Content */}
       <div className="flex flex-col flex-1 h-screen">
         <Header toggleSidebar={toggleSidebar} />
-        <div className="flex-1 p-4 bg-slate-100 overflow-clip min-h-0">
+        <div className="flex-1 p-4 overflow-auto bg-slate-100">
           <Outlet />
         </div>
       </div>
@@ -41,14 +41,14 @@ export default Main;
 //   };
 
 //   return (
-//     <div className="h-screen w-screen flex bg-white">
+//     <div className="flex w-screen h-screen bg-white">
 //       {/* Sidebar */}
 //       <Sidebar isCollapsed={isCollapsed} />
 
 //       {/* Main Content */}
 //       <div className="flex flex-col flex-1 transition-all duration-300">
 //         <Header toggleSidebar={toggleSidebar} />
-//         <div className="p-4 bg-quilocoS h-full overflow-clip bg-slate-100">
+//         <div className="h-full p-4 bg-quilocoS overflow-clip bg-slate-100">
 //           <Outlet />
 //         </div>
 //       </div>

@@ -167,7 +167,7 @@ function OnboardingScreeen() {
       dataIndex: "serial",
       key: "serial",
       render: (serial) => (
-        <p className="font-bold text-black text-[16px]">
+        <p className="font-normal text-black text-[16px]">
           {serial < 10 ? "0" + serial : serial}
         </p>
       ),
@@ -193,15 +193,15 @@ function OnboardingScreeen() {
       title: "Actions",
       key: "actions",
       render: (_, record) => (
-        <div className="flex gap-4">
+        <div className="flex gap-6">
           <FiEdit2
-            style={{ fontSize: 24 }}
-            className="text-black hover:text-blue-500 cursor-pointer"
+            style={{ fontSize: 18 }}
+            className="text-black cursor-pointer hover:text-blue-500"
             onClick={() => handleEdit(record)}
           />
           <RiDeleteBin6Line
-            style={{ fontSize: 24 }}
-            className="text-black hover:text-red-500 cursor-pointer"
+            style={{ fontSize: 18 }}
+            className="text-black cursor-pointer hover:text-red-500"
             onClick={() => handleDelete(record.key, record.name)}
           />
         </div>
@@ -235,16 +235,16 @@ function OnboardingScreeen() {
         },
       }}
     >
-      <div className=" py-5">
-        <div className="flex justify-between items-center py-5">
+      <div className="w-8/12 py-5">
+        <div className="flex items-center justify-between py-5">
           <h1 className="text-[20px] font-medium">{GetPageName()}</h1>
-          <Button
+          <ButtonEDU
             icon={<PlusOutlined className="mr-2" />}
             className="bg-smart h-9 text-white px-4 py-2.5 rounded-md flex items-center"
             onClick={showModal}
           >
             Add New
-          </Button>
+          </ButtonEDU>
         </div>
 
         <Table
@@ -253,11 +253,18 @@ function OnboardingScreeen() {
           pagination={{
             pageSizeOptions: [5, 10, 15, 20],
             defaultPageSize: 5,
-            position: ["bottomCenter"],
+            position: ["end"],
           }}
         />
 
         {/* Delete Confirmation Modal */}
+           <ConfigProvider
+                      theme={{
+                        token: {
+                          colorPrimary: '#F97316',
+                        },
+                      }}
+                    >
         <Modal
           title="Delete Confirmation"
           open={isDeleteModalOpen}
@@ -268,7 +275,7 @@ function OnboardingScreeen() {
           <div className="flex flex-col justify-between gap-5">
             <div className="flex justify-center">
               Are you sure you want to delete{" "}
-              <span className="font-bold ml-1">{deletingRecord?.name}</span>?
+              <span className="ml-1 font-bold">{deletingRecord?.name}</span>?
             </div>
             <div className="flex justify-center gap-4">
               <ButtonEDU actionType="cancel" onClick={onCancelDelete}>
@@ -280,8 +287,17 @@ function OnboardingScreeen() {
             </div>
           </div>
         </Modal>
+        </ConfigProvider>
 
         {/* Modal Form */}
+
+        <ConfigProvider
+              theme={{
+                token: {
+                  colorPrimary: '#F97316',
+                },
+              }}
+            >
         <Modal
           title={isEditing ? "Edit Slider" : "Add Slider"}
           open={isModalOpen}
@@ -336,6 +352,7 @@ function OnboardingScreeen() {
             </div>
           </Form>
         </Modal>
+        </ConfigProvider>
       </div>
     </ConfigProvider>
   );

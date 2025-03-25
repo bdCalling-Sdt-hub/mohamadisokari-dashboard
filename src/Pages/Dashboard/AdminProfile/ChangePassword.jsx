@@ -150,7 +150,7 @@ const ChangePassword = () => {
                     style={{
                       border: "none",
                       height: "41px",
-                      background: "#023f86",
+                      background: "#FF6600",
                       color: "white",
                       borderRadius: "8px",
                       outline: "none",

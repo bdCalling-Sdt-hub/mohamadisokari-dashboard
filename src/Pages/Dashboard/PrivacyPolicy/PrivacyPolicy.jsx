@@ -67,9 +67,10 @@ function PrivacyPolicy() {
 
   return (
     <>
+    
       <div className="w-full ">
         <h1 className="text-[20px] font-medium py-5">Privacy Policy</h1>
-        <div className="w-5/5 bg-black">
+        <div className="bg-black w-5/5">
           <JoditEditor
             className="my-5 bg-red-300"
             ref={editor}

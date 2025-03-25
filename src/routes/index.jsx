@@ -29,139 +29,64 @@ import DiscountCoupon from "../Pages/Dashboard/DiscountCoupon/DiscountCoupon.jsx
 import Report from "../Pages/Dashboard/Report/Report.jsx";
 import Slider from "../Pages/Dashboard/Slider/Slider.jsx";
 import OnboardingScreeen from "../Pages/Dashboard/OnboardingScreen/OnboardingScreeen.jsx";
+import UserDetails from "../components/users/UserDetails.jsx";
+import SalesHistory from "../components/users/SalesHistory.jsx";
+import BuyingHistory from "../components/users/BuyingHistory.jsx";
+import ProductDetails from "../components/product/ProductDetails.jsx";
+import ProductManagement from "../components/product/productManagement.jsx";
+import AppReview from "../components/AppReview/AppReview.jsx";
+import Category from "../components/category/Category.jsx";
 
 const router = createBrowserRouter([
   {
     path: "/",
-
     element: <Main />,
     children: [
+      { path: "/", element: <Home /> },
+      { path: "/service-provider-list", element: <ServiceProvidersList /> },
+      { path: "/product-details", element: <ProductManagement /> },
+      { path: "/app-review", element: <AppReview /> },
+      { path: "/product-details/:id", element: <ProductDetails /> },
+      { path: "/category", element: <Category /> },
+      { path: "/reported-issues", element: <Report /> },
+      { path: "/customer-list", element: <Customer /> },
+      { path: "/user-management", element: <BookingList /> },
+      { path: "/user-management/user-details/:id", element: <UserDetails /> },
+      { path: "/user-management/sales-history", element: <SalesHistory /> },
+      { path: "/user-management/buying-history", element: <BuyingHistory /> },
+      { path: "/transaction", element: <Transaction /> },
+      { path: "/support-chat", element: <SupportChat /> },
       {
-        path: "/",
-        element: <Home />,
-      },
-
-      {
-        path: "/service-provider-list",
-        element: <ServiceProvidersList />,
-      },
-
-      {
-        path: "/transaction",
-        element: <Transaction />,
-      },
-      {
-        path: "/discount-coupon",
-        element: <DiscountCoupon />,
-      },
-      {
-        path: "/reported-issues",
-        element: <Report />,
-      },
-
-      {
-        path: "/customer-list",
-        element: <Customer />,
-      },
-      {
-        path: "/booking-list",
-        element: <BookingList />,
-      },
-      {
-        path: "/support-chat",
-        element: <SupportChat />,
-      },
-      {
-        path: "/chat/:chatRoomId", // Change to "/chat/:chatRoomId"
-        element: <SupportChat />, // This should be your layout component
+        path: "/chat/:chatRoomId", 
+        element: <SupportChat />, 
         children: [
-          {
-            path: ":chatRoomId", // Child route for the selected chat user
-            element: <ChatRoom />,
-          },
+          { path: ":chatRoomId", element: <ChatRoom /> }
         ],
       },
-      {
-        path: "/pushnotification",
-        element: <PushNotification />,
-      },
-
-      {
-        path: "/faq",
-        element: <FaqCollapse />,
-      },
-      {
-        path: "/slider",
-        element: <Slider />,
-      },
-      {
-        path: "/onboarding-screen",
-        element: <OnboardingScreeen />,
-      },
-      {
-        path: "/contact",
-        element: <Contact />,
-      },
-
-      {
-        path: "/privacy-policy",
-        element: <PrivacyPolicy />,
-      },
-      {
-        path: "/terms-and-conditions",
-        element: <TermsAndCondition />,
-      },
-      {
-        path: "/:serviceType-services", // Dynamic route for services
-        element: <SpecificService />, // Services component
-      },
-      {
-        path: "/profile",
-        element: <AdminProfile />,
-      },
-      {
-        path: "/notification",
-        element: <Notifications />,
-      },
-
-      {
-        path: "/admin-list",
-        element: <Setting />,
-      },
-      {
-        path: "/category-list",
-        element: <CategoryList />,
-      },
-      {
-        path: "/service-list",
-        element: <ServiceList />,
-      },
+      { path: "/pushnotification", element: <PushNotification /> },
+      { path: "/faq", element: <FaqCollapse /> },
+      { path: "/slider", element: <Slider /> },
+      { path: "/onboarding-screen", element: <OnboardingScreeen /> },
+      { path: "/contact", element: <Contact /> },
+      { path: "/privacy-policy", element: <PrivacyPolicy /> },
+      { path: "/terms-and-conditions", element: <TermsAndCondition /> },
+      { path: "/:serviceType-services", element: <SpecificService /> },
+      { path: "/profile", element: <AdminProfile /> },
+      { path: "/notification", element: <Notifications /> },
+      { path: "/admin-list", element: <Setting /> },
+      { path: "/category-list", element: <CategoryList /> },
+      { path: "/service-list", element: <ServiceList /> },
     ],
   },
   {
     path: "/auth",
     element: <Auth />,
     children: [
-      {
-        path: "/auth",
-        element: <Login />,
-      },
-      {
-        path: "login",
-        element: <Login />,
-      },
-      {
-        path: "forgot-password",
-        element: <ForgotPassword />,
-      },
-      {
-        path: "verify-otp",
-        element: <VerifyOtp />,
-      },
-      {
-        path: "reset-password",
-        element: <ResetPassword />,
-      },
+      { path: "/auth", element: <Login /> },
+      { path: "login", element: <Login /> },
+      { path: "forgot-password", element: <ForgotPassword /> },
+      { path: "verify-otp", element: <VerifyOtp /> },
+      { path: "reset-password", element: <ResetPassword /> },
     ],
   },
   {

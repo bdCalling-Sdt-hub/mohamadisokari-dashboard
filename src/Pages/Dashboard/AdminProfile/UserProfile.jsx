@@ -37,7 +37,7 @@ const UserProfile = () => {
   };
 
   return (
-    <div className=" lg:grid lg:grid-rows-2">
+    <div className="w-8/12">
       {/* image   */}
       <div className="col-row-1">
         <div
@@ -62,7 +62,7 @@ const UserProfile = () => {
               cursor: "pointer",
               height: "195px",
               borderRadius: "100%",
-              border: "1px solid #1D75F2",
+              border: "1px solid #FF6600",
               background: "white",
               backgroundImage: `url(${imgURL})`,
               backgroundSize: "cover",
@@ -75,7 +75,7 @@ const UserProfile = () => {
                 background: "#E8F6FE",
                 width: "50px",
                 height: "50px",
-                border: "2px solid  #1D75F2",
+                border: "2px solid  #FF6600",
                 borderRadius: "100%",
                 display: "flex",
                 flexDirection: "column",
@@ -90,7 +90,7 @@ const UserProfile = () => {
       </div>
 
       {/* forms  */}
-      <div className="lg:col-rows-1  flex justify-center items-center  ">
+      <div className="flex items-center justify-center lg:col-rows-1 ">
         <Form
           name="normal_login"
           className="login-form"
@@ -99,7 +99,7 @@ const UserProfile = () => {
           onFinish={handleSubmit}
           form={form}
         >
-          <div className=" grid lg:grid-cols-2 grid-cols-1 lg:gap-x-16 w-full gap-y-7 ">
+          <div className="grid w-full grid-cols-1 lg:grid-cols-2 lg:gap-x-16 gap-y-7">
             <div>
               <Form.Item
                 style={{ marginBottom: 0 }}
@@ -191,7 +191,7 @@ const UserProfile = () => {
             </div>
           </div>
 
-          <div className="text-end mt-6">
+          <div className="mt-6 text-end">
             <Form.Item>
               <Button
                 htmlType="submit"
@@ -199,7 +199,7 @@ const UserProfile = () => {
                 style={{
                   border: "none",
                   height: "41px",
-                  background: "#023f86",
+                  background: "#FF6600",
                   color: "white",
                   borderRadius: "8px",
                   outline: "none",

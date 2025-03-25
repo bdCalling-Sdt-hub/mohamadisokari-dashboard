@@ -1,5 +1,3 @@
-import Paragraph from "antd/es/skeleton/Paragraph";
-
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
@@ -10,8 +8,7 @@ export default {
         secondary: "#7CC84E",
         base: "#4E4E4E",
         dashboard: "#023f86",
-        smart: "#18a0fb",
-
+        smart: "#FF6610",
         paragraph: "#7E7E7E",
       },
     },

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Modal, Form, Input, Button, Flex } from "antd";
+import { Modal, Form, Input, Button, Flex, ConfigProvider } from "antd";
 import { LiaPhoneVolumeSolid } from "react-icons/lia";
 import { PiMapPinAreaLight } from "react-icons/pi";
 import { CiMail } from "react-icons/ci";
@@ -53,10 +53,19 @@ const Contact = () => {
   ];
 
   return (
+    <ConfigProvider
+    theme={{
+      token: {
+        colorPrimary: '#F97316',
+      },
+
+      
+    }}
+  >
     <div className="py-5">
       <h1 className="text-[20px] font-medium mb-5">Contact</h1>
       <Flex vertical justify="center" gap={30} className="w-full">
-        <div className="flex items-center justify-normal bg-white p-12 w-4/5 gap-4 rounded-xl ">
+        <div className="flex items-center w-4/5 gap-4 p-12 bg-white justify-normal rounded-xl ">
           {[
             {
               icon: <LiaPhoneVolumeSolid size={50} />,
@@ -93,7 +102,7 @@ const Contact = () => {
         </div>
         <button
           onClick={showModal}
-          className="w-4/5 h-12 bg-white rounded-lg border border-1 border-smart text-smart font-bold tracking-wider hover:bg-smart hover:text-white hover:transition-all duration-500"
+          className="w-4/5 h-12 font-bold tracking-wider duration-500 bg-white border rounded-lg border-1 border-smart text-smart hover:bg-smart hover:text-white hover:transition-all"
         >
           Edit Info
         </button>
@@ -141,17 +150,18 @@ const Contact = () => {
             ))}
 
             <div className="flex justify-end gap-4">
-              <ButtonEDU actionType="cancel" onClick={handleCancel}>
+              <Button actionType="cancel" onClick={handleCancel}>
                 Cancel
-              </ButtonEDU>
-              <ButtonEDU actionType="update" htmlType="submit">
+              </Button>
+              <Button actionType="update" htmlType="submit">
                 Update
-              </ButtonEDU>
+              </Button>
             </div>
           </Form>
         </div>
       </Modal>
     </div>
+    </ConfigProvider>
   );
 };
 
