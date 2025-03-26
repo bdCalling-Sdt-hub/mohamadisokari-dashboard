@@ -145,17 +145,42 @@ const Sidebar = ({ isCollapsed }) => {
 
   useEffect(() => {
     const findSelectedKey = (items, currentPath) => {
+      // Special case for root path
+      if (currentPath === '/') {
+        return { selectedKey: '/', openKeys: [] };
+      }
+
+      // First try to find exact matches
       for (const item of items) {
         if (item.key === currentPath) {
           return { selectedKey: item.key, openKeys: [] };
         }
+        
         if (item.children) {
-          const childMatch = item.children.find(child => child.key === currentPath);
-          if (childMatch) {
-            return { selectedKey: childMatch.key, openKeys: [item.key] };
+          const exactChildMatch = item.children.find(child => child.key === currentPath);
+          if (exactChildMatch) {
+            return { selectedKey: exactChildMatch.key, openKeys: [item.key] };
           }
         }
       }
+
+      // If no exact match, look for partial matches (nested routes)
+      for (const item of items) {
+        // Skip root path for partial matching
+        if (item.key !== '/' && currentPath.startsWith(item.key)) {
+          return { selectedKey: item.key, openKeys: [] };
+        }
+        
+        if (item.children) {
+          const partialChildMatch = item.children.find(child => 
+            child.key !== '/' && currentPath.startsWith(child.key)
+          );
+          if (partialChildMatch) {
+            return { selectedKey: partialChildMatch.key, openKeys: [item.key] };
+          }
+        }
+      }
+
       return { selectedKey: "", openKeys: [] };
     };
 
@@ -171,9 +196,6 @@ const Sidebar = ({ isCollapsed }) => {
 
   return (
     <div className={`bg-quilocoP flex flex-col h-screen ${isCollapsed ? "w-[80px]" : "w-[280px]"}`}>
-      {/* Fixed Header */}
-      
-
       {/* Scrollable Menu */}
       <div 
         className="flex-1 pt-16 overflow-y-auto" 
