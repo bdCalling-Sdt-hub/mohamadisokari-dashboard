@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Table, ConfigProvider, Button, DatePicker, Input, Tag, Tooltip, Dropdown, Space, Modal } from "antd";
-import { SearchOutlined, FilterOutlined, SortAscendingOutlined, SortDescendingOutlined, DeleteOutlined, EyeOutlined, DownloadOutlined, ReloadOutlined, SettingOutlined } from "@ant-design/icons";
+import { Table, ConfigProvider, Button, DatePicker, Input, Tag, Tooltip, Dropdown, Space, Modal, Select } from "antd";
+import { SearchOutlined, FilterOutlined, SortAscendingOutlined, SortDescendingOutlined, DeleteOutlined, EyeOutlined, DownloadOutlined, ReloadOutlined, SettingOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
 import DetailsModal from "./DetailsModal";
 import ReportChart from "./ReportChart";
 
@@ -22,7 +22,8 @@ function Report() {
   const [tableSettings, setTableSettings] = useState({
     dense: false,
     showBorders: true,
-    pageSize: 10
+    pageSize: 10,
+    currentPage: 1
   });
 
   // Simulating data fetching
@@ -39,6 +40,34 @@ function Report() {
   const rowSelection = {
     selectedRowKeys,
     onChange: setSelectedRowKeys,
+  };
+
+  // Pagination handlers
+  const handlePageSizeChange = (value) => {
+    setTableSettings(prev => ({
+      ...prev,
+      pageSize: Number(value),
+      currentPage: 1 // Reset to first page when page size changes
+    }));
+  };
+
+  const handlePrevPage = () => {
+    if (tableSettings.currentPage > 1) {
+      setTableSettings(prev => ({
+        ...prev,
+        currentPage: prev.currentPage - 1
+      }));
+    }
+  };
+
+  const handleNextPage = () => {
+    const totalPages = Math.ceil(processedData.length / tableSettings.pageSize);
+    if (tableSettings.currentPage < totalPages) {
+      setTableSettings(prev => ({
+        ...prev,
+        currentPage: prev.currentPage + 1
+      }));
+    }
   };
 
   // Enhanced handlers
@@ -66,14 +95,17 @@ function Report() {
 
   const handleSearch = (e) => {
     setSearchText(e.target.value);
+    setTableSettings(prev => ({ ...prev, currentPage: 1 })); // Reset to first page when searching
   };
 
   const handleFilterStatus = (status) => {
     setFilterStatus(status === filterStatus ? null : status);
+    setTableSettings(prev => ({ ...prev, currentPage: 1 })); // Reset to first page when filtering
   };
 
   const handleMonthChange = (date) => {
     setSelectedMonth(date);
+    setTableSettings(prev => ({ ...prev, currentPage: 1 })); // Reset to first page when filtering by month
   };
 
   const handleRefresh = () => {
@@ -84,6 +116,7 @@ function Report() {
       setSearchText('');
       setFilterStatus(null);
       setSelectedMonth(null);
+      setTableSettings(prev => ({ ...prev, currentPage: 1 }));
     }, 500);
   };
 
@@ -138,6 +171,13 @@ function Report() {
     
     return result;
   }, [userData, searchText, filterStatus, selectedMonth, sortState]);
+
+  // Get paginated data
+  const paginatedData = useMemo(() => {
+    const startIndex = (tableSettings.currentPage - 1) * tableSettings.pageSize;
+    const endIndex = startIndex + tableSettings.pageSize;
+    return processedData.slice(startIndex, endIndex);
+  }, [processedData, tableSettings.currentPage, tableSettings.pageSize]);
 
   // Enhanced columns with sorting and filtering
   const columns = [
@@ -299,174 +339,194 @@ function Report() {
     },
   ];
 
-
-
   return (
-   <div className="flex flex-col gap-4">
-     <ConfigProvider
-      theme={{
-        token: {
-          colorPrimary: '#F97316',
-          borderRadius: 6,
-          fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-        },
-        components: {
-          Table: {
-            rowSelectedBg: "rgba(24, 160, 251, 0.1)",
-            headerBg: "#f0f7ff",
-            headerSplitColor: tableSettings.showBorders ? "#e5e7eb" : "transparent",
-            headerBorderRadius: 6,
-            cellFontSize: tableSettings.dense ? "14px" : "16px",
-            rowHoverBg: "rgba(24, 160, 251, 0.05)",
-            borderColor: tableSettings.showBorders ? "#e5e7eb" : "transparent",
-          },
-          Pagination: {
+    <div className="flex flex-col gap-4">
+      <ConfigProvider
+        theme={{
+          token: {
+            colorPrimary: '#F97316',
             borderRadius: 6,
-            itemActiveBg: "#18a0fb",
+            fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
           },
-          Button: {
-            defaultHoverBg: "rgba(24, 160, 251, 0.1)",
-            defaultHoverColor: "#18a0fb",
-            defaultHoverBorderColor: "#18a0fb",
+          components: {
+            Table: {
+              rowSelectedBg: "rgba(24, 160, 251, 0.1)",
+              headerBg: "#f0f7ff",
+              headerSplitColor: tableSettings.showBorders ? "#e5e7eb" : "transparent",
+              headerBorderRadius: 6,
+              cellFontSize: tableSettings.dense ? "14px" : "16px",
+              rowHoverBg: "rgba(24, 160, 251, 0.05)",
+              borderColor: tableSettings.showBorders ? "#e5e7eb" : "transparent",
+            },
+            Pagination: {
+              borderRadius: 6,
+              itemActiveBg: "#18a0fb",
+            },
+            Button: {
+              defaultHoverBg: "rgba(24, 160, 251, 0.1)",
+              defaultHoverColor: "#18a0fb",
+              defaultHoverBorderColor: "#18a0fb",
+            },
+            Tag: {
+              defaultBg: "#f0f7ff",
+              defaultColor: "#18a0fb",
+            },
           },
-          Tag: {
-            defaultBg: "#f0f7ff",
-            defaultColor: "#18a0fb",
-          },
-        },
-      }}
-    >
-
+        }}
+      >
         <ReportChart />
-      <div className="p-6 bg-white rounded-lg shadow-sm">
-        <div className="flex items-center justify-between pb-5 mb-5 border-b border-gray-100">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-800">Report Issues</h1>
-            <p className="mt-1 text-gray-500">
-              {processedData.length} {processedData.length === 1 ? 'report' : 'reports'} found
-              {filterStatus ? ` with status "${filterStatus}"` : ''}
-              {searchText ? ` matching "${searchText}"` : ''}
-            </p>
+        <div className="p-6 bg-white rounded-lg shadow-sm">
+          <div className="flex items-center justify-between pb-5 mb-5 border-b border-gray-100">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-800">Report Issues</h1>
+              <p className="mt-1 text-gray-500">
+                {processedData.length} {processedData.length === 1 ? 'report' : 'reports'} found
+                {filterStatus ? ` with status "${filterStatus}"` : ''}
+                {searchText ? ` matching "${searchText}"` : ''}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Tooltip title="Refresh Data">
+                <Button 
+                  icon={<ReloadOutlined />} 
+                  onClick={handleRefresh}
+                  loading={loading}
+                  className="flex items-center justify-center"
+                />
+              </Tooltip>
+              
+              <Tooltip title="Export to CSV">
+                <Button 
+                  icon={<DownloadOutlined />} 
+                  className="flex items-center justify-center"
+                >
+                  Export
+                </Button>
+              </Tooltip>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-3">
-            <Tooltip title="Refresh Data">
-              <Button 
-                icon={<ReloadOutlined />} 
-                onClick={handleRefresh}
-                loading={loading}
-                className="flex items-center justify-center"
+
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+            <div className="flex flex-1 gap-3">
+              <Input
+                placeholder="Search by ID, provider, or reporter..."
+                prefix={<SearchOutlined className="text-gray-400" />}
+                className="max-w-md"
+                value={searchText}
+                onChange={handleSearch}
+                allowClear
               />
-            </Tooltip>
+              
+              <DatePicker 
+                picker="month" 
+                placeholder="Filter by month"
+                className="w-40"
+                onChange={handleMonthChange}
+                value={selectedMonth}
+              />
+            </div>
             
-            <Tooltip title="Export to CSV">
-              <Button 
-                icon={<DownloadOutlined />} 
-                className="flex items-center justify-center"
-              >
-                Export
-              </Button>
-            </Tooltip>
-            
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-          <div className="flex flex-1 gap-3">
-            <Input
-              placeholder="Search by ID, provider, or reporter..."
-              prefix={<SearchOutlined className="text-gray-400" />}
-              className="max-w-md"
-              value={searchText}
-              onChange={handleSearch}
-              allowClear
-            />
-            
-            <DatePicker 
-              picker="month" 
-              placeholder="Filter by month"
-              className="w-40"
-              onChange={handleMonthChange}
-              value={selectedMonth}
-            />
-          </div>
-          
-          <div className="flex gap-3">
-            <Button
-              icon={sortState.order === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />}
-              onClick={() => handleSort('date')}
-              type={sortState.field === 'date' ? "primary" : "default"}
-              ghost={sortState.field === 'date'}
-              className="flex items-center"
-            >
-              Sort by Date
-            </Button>
-
-            {selectedRowKeys.length > 0 && (
+            <div className="flex gap-3">
               <Button
-                icon={<DeleteOutlined />}
-                onClick={handleDeleteSelected}
-                danger
-                type="primary"
+                icon={sortState.order === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />}
+                onClick={() => handleSort('date')}
+                type={sortState.field === 'date' ? "primary" : "default"}
+                ghost={sortState.field === 'date'}
                 className="flex items-center"
               >
-                Delete {selectedRowKeys.length} Selected
+                Sort by Date
               </Button>
-            )}
+
+              {selectedRowKeys.length > 0 && (
+                <Button
+                  icon={<DeleteOutlined />}
+                  onClick={handleDeleteSelected}
+                  danger
+                  type="primary"
+                  className="flex items-center"
+                >
+                  Delete {selectedRowKeys.length} Selected
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
 
-        <Table
-          rowSelection={rowSelection}
-          columns={columns}
-          dataSource={processedData}
-          loading={loading}
-          size={tableSettings.dense ? "small" : "middle"}
-          pagination={{
-            defaultPageSize: tableSettings.pageSize,
-            pageSize: tableSettings.pageSize,
-            position: ["bottomRight"],
-            size: "default",
-            total: processedData.length,
-            
-           
-            
-          }}
-          rowClassName="hover:bg-gray-50 transition-colors"
-          bordered={tableSettings.showBorders}
-          className={tableSettings.showBorders ? "" : "table-borderless"}
-        />
-
-        {/* View Details Modal */}
-        {isModalOpen && selectedRecord && (
-          <DetailsModal
-            isModalOpen={isModalOpen}
-            setIsModalOpen={setIsModalOpen}
-            record={selectedRecord}
+          <Table
+            rowSelection={rowSelection}
+            columns={columns}
+            dataSource={paginatedData}
+            loading={loading}
+            size={tableSettings.dense ? "small" : "middle"}
+            pagination={false}
+            rowClassName="hover:bg-gray-50 transition-colors"
+            bordered={tableSettings.showBorders}
+            className={tableSettings.showBorders ? "" : "table-borderless"}
           />
-        )}
 
-        {/* Delete Confirmation Modal */}
-        <Modal
-          title="Confirm Deletion"
-          open={isDeleteModalVisible}
-          centered
-          onCancel={() => setIsDeleteModalVisible(false)}
-          footer={[
-            <Button key="cancel" onClick={() => setIsDeleteModalVisible(false)}>
-              Cancel
-            </Button>,
-            <Button key="delete" danger type="primary" onClick={confirmDelete}>
-              Delete
-            </Button>,
-          ]}
-        >
-          <p>Are you sure you want to delete {selectedRowKeys.length} selected {selectedRowKeys.length === 1 ? 'item' : 'items'}?</p>
-          <p className="mt-2 text-gray-500">This action cannot be undone.</p>
-        </Modal>
-      </div>
-    </ConfigProvider>
-   </div>
+          {/* Custom Pagination */}
+          <div className="flex items-center justify-end mt-4 pagination-container">
+            <Select 
+              defaultValue="10" 
+              style={{ width: 120 }} 
+              onChange={handlePageSizeChange}
+              options={[
+                { value: '10', label: '10 / page' },
+                { value: '20', label: '20 / page' },
+                { value: '50', label: '50 / page' },
+              ]}
+              value={String(tableSettings.pageSize)}
+            />
+            <span style={{ margin: '0 16px' }}>
+              {processedData.length === 0 
+                ? '0-0 of 0' 
+                : `${(tableSettings.currentPage - 1) * tableSettings.pageSize + 1}-${Math.min(tableSettings.currentPage * tableSettings.pageSize, processedData.length)} of ${processedData.length}`}
+            </span>
+            <Button 
+              type="text" 
+              icon={<LeftOutlined />} 
+              disabled={tableSettings.currentPage === 1} 
+              onClick={handlePrevPage}
+              style={{ marginRight: '8px' }} 
+            />
+            <Button 
+              type="text" 
+              icon={<RightOutlined />} 
+              disabled={tableSettings.currentPage >= Math.ceil(processedData.length / tableSettings.pageSize)}
+              onClick={handleNextPage}
+            />
+          </div>
+
+          {/* View Details Modal */}
+          {isModalOpen && selectedRecord && (
+            <DetailsModal
+              isModalOpen={isModalOpen}
+              setIsModalOpen={setIsModalOpen}
+              record={selectedRecord}
+            />
+          )}
+
+          {/* Delete Confirmation Modal */}
+          <Modal
+            title="Confirm Deletion"
+            open={isDeleteModalVisible}
+            centered
+            onCancel={() => setIsDeleteModalVisible(false)}
+            footer={[
+              <Button key="cancel" onClick={() => setIsDeleteModalVisible(false)}>
+                Cancel
+              </Button>,
+              <Button key="delete" danger type="primary" onClick={confirmDelete}>
+                Delete
+              </Button>,
+            ]}
+          >
+            <p>Are you sure you want to delete {selectedRowKeys.length} selected {selectedRowKeys.length === 1 ? 'item' : 'items'}?</p>
+            <p className="mt-2 text-gray-500">This action cannot be undone.</p>
+          </Modal>
+        </div>
+      </ConfigProvider>
+    </div>
   );
 }
 
@@ -553,5 +613,45 @@ const sampleData = [
     date: "2024-12-15",
     priority: "Medium",
     description: "Integration issue with third-party API"
+  },
+  {
+    key: 9,
+    reportID: "R009",
+    serviceProvider: "Provider 4",
+    reportedBy: "James Wilson",
+    status: "Resolved",
+    date: "2024-11-10",
+    priority: "Low",
+    description: "Minor documentation issue"
+  },
+  {
+    key: 10,
+    reportID: "R010",
+    serviceProvider: "Provider 5",
+    reportedBy: "Emily Davis",
+    status: "Under Review",
+    date: "2024-12-20",
+    priority: "High",
+    description: "System outage affecting multiple users"
+  },
+  {
+    key: 11,
+    reportID: "R011",
+    serviceProvider: "Provider 1",
+    reportedBy: "Daniel Harris",
+    status: "Pending",
+    date: "2024-12-01",
+    priority: "Medium",
+    description: "Performance issues in mobile app"
+  },
+  {
+    key: 12,
+    reportID: "R012",
+    serviceProvider: "Provider 2",
+    reportedBy: "Olivia Martin",
+    status: "Resolved",
+    date: "2024-11-15",
+    priority: "Low",
+    description: "Typo in error message"
   },
 ];

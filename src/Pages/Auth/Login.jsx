@@ -2,19 +2,17 @@ import { Button, Checkbox, Form, Input } from "antd";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import FormItem from "../../components/common/FormItem";
-// import Cookies from "js-cookie";
 
 const Login = () => {
   const navigate = useNavigate();
 
   const onFinish = async (values) => {
     navigate("/");
-    // Cookies.set('token', token, { expires: 7 })
   };
 
   return (
     <div>
-      <div className="text-center mb-8">
+      <div className="mb-8 text-center">
         <h1 className="text-[25px] font-semibold mb-6">Login</h1>
         <p>Please enter your email and password to continue</p>
       </div>
@@ -22,7 +20,7 @@ const Login = () => {
         <Form.Item
           name="email"
           label={
-            <p className="text-black font-normal text-base">Enter Your Email</p>
+            <p className="text-base font-normal text-black">Enter Your Email</p>
           }
           rules={[
             {
@@ -44,7 +42,7 @@ const Login = () => {
 
         <Form.Item
           name="password"
-          label={<p className="text-black font-normal text-base">Password</p>}
+          label={<p className="text-base font-normal text-black">Password</p>}
           rules={[
             {
               required: true,
@@ -70,11 +68,15 @@ const Login = () => {
             name="remember"
             valuePropName="checked"
           >
-            <Checkbox>Remember me</Checkbox>
+            <Checkbox 
+              className="custom-checkbox"
+            >
+              Remember me
+            </Checkbox>
           </Form.Item>
 
           <a
-            className="login-form-forgot text-smart/80 hover:text-smart font-semibold"
+            className="font-semibold login-form-forgot text-smart/80 hover:text-smart"
             href="/auth/forgot-password"
           >
             Forgot password
@@ -91,15 +93,27 @@ const Login = () => {
               color: "white",
               fontWeight: "400px",
               fontSize: "18px",
-
               marginTop: 20,
             }}
-            className="flex items-center justify-center bg-smart hover:bg-smart/90 rounded-lg text-base"
+            className="flex items-center justify-center text-base rounded-lg bg-smart hover:bg-smart/90"
           >
-            {/* {isLoading? < Spinner/> : "Sign in"} */} Sign in
+            Sign in
           </button>
         </Form.Item>
       </Form>
+      
+      <style jsx>{`
+        .custom-checkbox .ant-checkbox-checked .ant-checkbox-inner {
+          background-color: #FF7527 !important;
+          border-color: #FF7527 !important;
+        }
+        .custom-checkbox .ant-checkbox-checked::after {
+          border-color: #FF7527 !important;
+        }
+          .custom-checkbox:hover .ant-checkbox-checked::after {
+          border-color: #FF7527 !important;
+        }
+      `}</style>
     </div>
   );
 };

@@ -15,11 +15,10 @@ import TermsAndCondition from "../Pages/Dashboard/TermsAndCondition/TermsAndCond
 import ServiceProvidersList from "../Pages/Dashboard/ServiceProvider/ServiceProvidersList.jsx";
 import Transaction from "../Pages/Dashboard/Transaction/Transaction.jsx";
 import Setting from "../Pages/Dashboard/Setting/Setting.jsx";
-import FaqCollapse from "../Pages/Dashboard/FAQ/FaqCollapse.jsx";
 import Contact from "../Pages/Dashboard/Contact/Contact.jsx";
 import Customer from "../Pages/Dashboard/Customer/Customer.jsx";
 import PushNotification from "../Pages/Dashboard/PushNotification/PushNotification.jsx";
-import BookingList from "../Pages/Dashboard/Booking/BookingList.jsx";
+import UserManagement from "../Pages/Dashboard/Booking/UserManagement.jsx";
 import CategoryList from "../Pages/Dashboard/Service/CategoryList/CategoryList.jsx";
 import ServiceList from "../Pages/Dashboard/Service/ServiceList/ServiceList.jsx";
 import SpecificService from "../Pages/Dashboard/DyanamicPage/SpecificService.jsx";
@@ -50,7 +49,7 @@ const router = createBrowserRouter([
       { path: "/category", element: <Category /> },
       { path: "/reported-issues", element: <Report /> },
       { path: "/customer-list", element: <Customer /> },
-      { path: "/user-management", element: <BookingList /> },
+      { path: "/user-management", element: <UserManagement /> },
       { path: "/user-management/user-details/:id", element: <UserDetails /> },
       { path: "/user-management/sales-history", element: <SalesHistory /> },
       { path: "/user-management/buying-history", element: <BuyingHistory /> },
@@ -64,7 +63,6 @@ const router = createBrowserRouter([
         ],
       },
       { path: "/pushnotification", element: <PushNotification /> },
-      { path: "/faq", element: <FaqCollapse /> },
       { path: "/slider", element: <Slider /> },
       { path: "/onboarding-screen", element: <OnboardingScreeen /> },
       { path: "/contact", element: <Contact /> },

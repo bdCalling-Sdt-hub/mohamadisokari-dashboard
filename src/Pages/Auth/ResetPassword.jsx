@@ -1,6 +1,8 @@
-import { Button, Form, Input, ConfigProvider } from "antd";
+import { Button, Form, Input, ConfigProvider, Typography } from "antd";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+
+const { Title, Text } = Typography;
 
 const ResetPassword = () => {
   const email = new URLSearchParams(location.search).get("email");
@@ -11,32 +13,41 @@ const ResetPassword = () => {
   };
 
   return (
-    <div>
-      <div className="text-center mb-12">
-        <h1 className="text-[25px] font-semibold mb-6">Reset Password</h1>
+    <div className="max-w-md p-8 mx-auto overflow-hidden bg-white rounded-xl md:max-w-2xl">
+      <div className="mb-10 text-center">
+        <Title level={3} className="!text-2xl !font-semibold !mb-2 !text-gray-800">
+          Reset Password
+        </Title>
+        <Text type="secondary" className="text-gray-500">
+          Create a new password for your account
+        </Text>
       </div>
+      
       <ConfigProvider
         theme={{
+          token: {
+            colorPrimary: '#FF6600',
+            borderRadius: 8,
+            colorBgContainer: '#ffffff',
+          },
           components: {
             Form: {
               labelColor: "black",
             },
+            Input: {
+              hoverBorderColor: '#FF6600',
+              activeBorderColor: '#FF6600',
+            }
           },
         }}
       >
-        <Form layout="vertical" onFinish={onFinish}>
+        <Form layout="vertical" onFinish={onFinish} className="space-y-6">
           <Form.Item
             name="newPassword"
             label={
-              <p
-                style={{
-                  display: "block",
-                }}
-                htmlFor="email"
-                className="text-base font-normal text-black"
-              >
+              <Text className="!text-gray-700 !font-medium">
                 New Password
-              </p>
+              </Text>
             }
             rules={[
               {
@@ -44,35 +55,18 @@ const ResetPassword = () => {
                 message: "Please input your new Password!",
               },
             ]}
-            style={{ marginBottom: 0 }}
           >
             <Input.Password
-              type="password"
-              placeholder="Enter New password"
-              style={{
-                border: "1px solid #E0E4EC",
-                height: "52px",
-                background: "white",
-                borderRadius: "8px",
-
-                outline: "none",
-              }}
-              className="mb-6"
+              placeholder="Enter new password"
+              className="!h-12 !rounded-lg hover:!border-orange-300 focus:!border-orange-500 focus:!shadow-md"
             />
           </Form.Item>
 
           <Form.Item
-            style={{ marginBottom: 0 }}
             label={
-              <p
-                style={{
-                  display: "block",
-                }}
-                htmlFor="email"
-                className="text-base text-black font-normal"
-              >
+              <Text className="!text-gray-700 !font-medium">
                 Confirm Password
-              </p>
+              </Text>
             }
             name="confirmPassword"
             dependencies={["newPassword"]}
@@ -88,41 +82,26 @@ const ResetPassword = () => {
                     return Promise.resolve();
                   }
                   return Promise.reject(
-                    new Error("The new password that you entered do not match!")
+                    new Error("The passwords you entered do not match!")
                   );
                 },
               }),
             ]}
           >
             <Input.Password
-              type="password"
-              placeholder="Enter Confirm password"
-              style={{
-                border: "1px solid #E0E4EC",
-                height: "52px",
-                background: "white",
-                borderRadius: "8px",
-                outline: "none",
-              }}
-              className="mb-6"
+              placeholder="Confirm your password"
+              className="!h-12 !rounded-lg hover:!border-orange-300 focus:!border-orange-500 focus:!shadow-md"
             />
           </Form.Item>
 
-          <Form.Item style={{ marginBottom: 0 }}>
+          <Form.Item>
             <Button
+              type="primary"
               htmlType="submit"
-              style={{
-                width: "100%",
-                height: 45,
-                color: "white",
-                fontWeight: "400px",
-                fontSize: "18px",
-                border: "1px solid #18a0fb",
-                background: "#18a0fb ",
-                marginTop: 20,
-              }}
+              block
+              className="!h-12 !rounded-lg !text-white !font-medium !text-base !bg-orange-500 hover:!bg-orange-600 focus:!bg-orange-600 !border-orange-500 !shadow-md"
             >
-              Update
+              Update Password
             </Button>
           </Form.Item>
         </Form>

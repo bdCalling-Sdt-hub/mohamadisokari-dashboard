@@ -27,7 +27,9 @@ import {
   SortAscendingOutlined,
   SortDescendingOutlined,
   DownloadOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  LeftOutlined,
+  RightOutlined
 } from '@ant-design/icons';
 import './UserManagement.css'; // For additional styling
 import { useNavigate } from 'react-router-dom';
@@ -36,7 +38,7 @@ const { Text } = Typography;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
-const UserManagement = () => {
+const UserManagementTable = () => {
   const router = useNavigate();
   // Sample data
   const initialData = [
@@ -134,6 +136,7 @@ const UserManagement = () => {
     }
     
     setFilteredData(result);
+    setCurrentPage(1); // Reset to first page when filters change
   }, [searchText, statusFilter, dateRange, sortField, sortOrder]);
 
   // Pagination logic
@@ -143,25 +146,20 @@ const UserManagement = () => {
     return data.slice(startIndex, endIndex);
   };
 
-  // User click handler - logs the user ID
-
-
-  // Name click handler - logs the particular data
+  // Name click handler
   const handleNameClick = (record, e) => {
-    e.stopPropagation(); // Prevent row click from triggering
+    e.stopPropagation();
     router(`/user-management/user-details/${record?.key}`)
   };
 
-  // Filtering handler
+  // Search handler
   const handleSearch = (value) => {
     setSearchText(value);
-    setCurrentPage(1); // Reset to first page when searching
   };
 
   // Status filter handler
   const handleStatusFilter = (status) => {
     setStatusFilter(status === 'all' ? null : status);
-    setCurrentPage(1); // Reset to first page when filtering
   };
 
   // Sort handler
@@ -175,13 +173,30 @@ const UserManagement = () => {
     setSortOrder(sortOrder === 'ascend' ? 'descend' : 'ascend');
   };
 
+  // Page size change handler
+  const handlePageSizeChange = (value) => {
+    setPageSize(Number(value));
+    setCurrentPage(1);
+  };
 
+  // Previous page handler
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Next page handler
+  const handleNextPage = () => {
+    if (currentPage < Math.ceil(filteredData.length / pageSize)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   // Bulk actions handler
   const handleBulkAction = (action) => {
     setLoading(true);
     
-    // Simulate bulk action process
     setTimeout(() => {
       if (action === 'delete') {
         message.success(`${selectedRowKeys.length} users deleted successfully`);
@@ -414,22 +429,12 @@ const UserManagement = () => {
           </Row>
         </div>
 
-
-
         <Table 
           rowSelection={rowSelection}
           columns={columns} 
           dataSource={data}
           loading={loading}
-         
-          pagination={{
-            current: currentPage,
-            pageSize: pageSize,
-            total: filteredData.length,
-            showSizeChanger: true,
-            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
-            onChange: (page) => setCurrentPage(page),  
-          }}
+          pagination={false}
           onChange={(pagination, filters, sorter) => {
             if (sorter && sorter.field) {
               setSortField(sorter.field);
@@ -443,9 +448,42 @@ const UserManagement = () => {
           size="middle"
           scroll={{ x: 'max-content' }}
         />
+
+        <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'end', alignItems: 'center' }}>
+          <div className="pagination-container" style={{ display: 'flex', alignItems: 'center' }}>
+            <Select 
+              defaultValue="10" 
+              style={{ width: 120 }} 
+              onChange={handlePageSizeChange}
+              options={[
+                { value: '10', label: '10 / page' },
+                { value: '20', label: '20 / page' },
+                { value: '50', label: '50 / page' },
+              ]}
+            />
+            <span style={{ margin: '0 16px' }}>
+              {filteredData.length === 0 
+                ? '0-0 of 0' 
+                : `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, filteredData.length)} of ${filteredData.length}`}
+            </span>
+            <Button 
+              type="text" 
+              icon={<LeftOutlined />} 
+              disabled={currentPage === 1} 
+              onClick={handlePrevPage}
+              style={{ marginRight: '8px' }} 
+            />
+            <Button 
+              type="text" 
+              icon={<RightOutlined />} 
+              disabled={currentPage >= Math.ceil(filteredData.length / pageSize)}
+              onClick={handleNextPage}
+            />
+          </div>
+        </div>
       </Card>
     </ConfigProvider>
   );
 };
 
-export default UserManagement;
+export default UserManagementTable;

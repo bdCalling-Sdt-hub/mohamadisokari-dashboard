@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaRegBell, FaUser } from "react-icons/fa6";
-import { Badge, Avatar, ConfigProvider, Dropdown } from "antd";
+import { Badge, Avatar, ConfigProvider, Dropdown, Tooltip } from "antd";
 import { useUser } from "../../provider/User";
 import { CgMenu } from "react-icons/cg";
 import { DownOutlined } from "@ant-design/icons";
@@ -45,23 +45,10 @@ const Header = ({ toggleSidebar }) => {
           <div className="flex items-center justify-between">
             {/* Sidebar Toggle */}
             <div className="flex items-start">
-            {/* <button 
-                onClick={toggleSidebar} 
-                className="p-2 transition-colors rounded-lg hover:bg-blue-50">
-                <CgMenu 
-                  size={28} 
-                  className="text-[#FF6600] hover:text-[#FF6600] transition-colors" 
-                />
-              </button> */}
 
-              <div className="flex items-center justify-start gap-3 px-4 ">
-                        {/* <TbDashboard size={40} className="text-[#F97316]" /> */}
-                      
-                          <p className="text-2xl font-semibold text-[#F97316]">Dashboard</p>
-                 
-                      </div>
-
-
+              <div className="flex items-center justify-start gap-3 px-4 ">      
+                    <p className="text-2xl font-semibold text-[#F97316]">Dashboard</p>
+              </div>
             </div>
 
             {/* Right Side Actions */}
@@ -70,12 +57,9 @@ const Header = ({ toggleSidebar }) => {
               <div className="relative">
                 <Link 
                   to="/notification" 
-                  className="relative block p-2 transition-colors rounded-lg hover:bg-blue-50"
+                  className="relative block p-2 transition-colors rounded-lg bg-blue-50 hover:bg-blue-100"
                 >
-                  <FaRegBell 
-                    size={24} 
-                    className="text-[#FF6600] hover:text-[#FF6600] transition-colors" 
-                  />
+                  <Tooltip title="Notification"><FaRegBell size={24} className="text-[#FF6600] hover:text-[#FF6600] transition-colors" /></Tooltip>
                   <Badge 
                     dot 
                     status="error" 

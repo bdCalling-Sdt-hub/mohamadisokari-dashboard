@@ -15,18 +15,18 @@ import { Select } from 'antd';
 const ReportChart = () => {
   // Sample data with district and year information
   const data = [
-    { name: 'Jan', district: 'North', available: 150, sold: 20, year: 2025 },
-    { name: 'Feb', district: 'North', available: 80, sold: 50, year: 2025 },
-    { name: 'Mar', district: 'South', available: 250, sold: 35, year: 2025 },
-    { name: 'Apr', district: 'South', available: 270, sold: 30, year: 2024 },
-    { name: 'May', district: 'East', available: 320, sold: 25, year: 2024 },
-    { name: 'Jun', district: 'East', available: 380, sold: 55, year: 2024 },
-    { name: 'Jul', district: 'West', available: 270, sold: 40, year: 2023 },
-    { name: 'Aug', district: 'West', available: 350, sold: 60, year: 2023 },
-    { name: 'Sep', district: 'North', available: 200, sold: 50, year: 2022 },
-    { name: 'Oct', district: 'South', available: 250, sold: 35, year: 2022 },
-    { name: 'Nov', district: 'East', available: 270, sold: 30, year: 2021 },
-    { name: 'Dec', district: 'West', available: 270, sold: 70, year: 2020 }
+    { name: 'Jan', district: 'North', review: 150, resolve: 20, year: 2025 },
+    { name: 'Feb', district: 'North', review: 80, resolve: 50, year: 2025 },
+    { name: 'Mar', district: 'South', review: 250, resolve: 35, year: 2025 },
+    { name: 'Apr', district: 'South', review: 270, resolve: 30, year: 2024 },
+    { name: 'May', district: 'East', review: 320, resolve: 25, year: 2024 },
+    { name: 'Jun', district: 'East', review: 380, resolve: 55, year: 2024 },
+    { name: 'Jul', district: 'West', review: 270, resolve: 40, year: 2023 },
+    { name: 'Aug', district: 'West', review: 350, resolve: 60, year: 2023 },
+    { name: 'Sep', district: 'North', review: 200, resolve: 50, year: 2022 },
+    { name: 'Oct', district: 'South', review: 250, resolve: 35, year: 2022 },
+    { name: 'Nov', district: 'East', review: 270, resolve: 30, year: 2021 },
+    { name: 'Dec', district: 'West', review: 270, resolve: 70, year: 2020 }
   ];
 
   const [selectedDistrict, setSelectedDistrict] = useState('All Districts');
@@ -67,11 +67,11 @@ const ReportChart = () => {
           <div className="mt-1">
             <div className="flex items-center mb-1">
               <div className="w-3 h-3 mr-2 rounded-full" style={{ backgroundColor: '#FF6B35' }}></div>
-              <p className="m-0"><span className="font-medium">Available:</span> {monthData.available}</p>
+              <p className="m-0"><span className="font-medium">Under Review:</span> {monthData.review}</p>
             </div>
             <div className="flex items-center">
               <div className="w-3 h-3 mr-2 rounded-full" style={{ backgroundColor: '#FFCBA5' }}></div>
-              <p className="m-0"><span className="font-medium">Sold:</span> {monthData.sold}</p>
+              <p className="m-0"><span className="font-medium">Resolve:</span> {monthData.resolve}</p>
             </div>
           </div>
         </div>
@@ -146,9 +146,9 @@ const ReportChart = () => {
               wrapperStyle={{ paddingTop: '20px' }}
               onClick={(e) => handleLegendClick(e.dataKey)}
               payload={[
-                { value: 'Available', dataKey: 'available', type: 'circle', color: '#FF6B35', 
+                { value: 'Under Review', dataKey: 'review', type: 'circle', color: '#FF6B35', 
                   payload: { strokeDasharray: hiddenBars.includes('available') ? '3 3' : '0', fill: '#FF6B35' } },
-                { value: 'Sold', dataKey: 'sold', type: 'circle', color: '#FFCBA5', 
+                { value: 'resolve', dataKey: 'resolve', type: 'circle', color: '#FFCBA5', 
                   payload: { strokeDasharray: hiddenBars.includes('sold') ? '3 3' : '0', fill: '#FFCBA5' } },
               ]}
               formatter={(value, entry) => (
@@ -157,10 +157,10 @@ const ReportChart = () => {
                 </span>
               )}
             />
-            {!hiddenBars.includes('available') && (
-              <Bar dataKey="available" fill="#FF6B35" radius={[4, 4, 0, 0]} barSize={20}>
+            {!hiddenBars.includes('review') && (
+              <Bar dataKey="review" fill="#FF6B35" radius={[4, 4, 0, 0]} barSize={20}>
                 <LabelList 
-                  dataKey="available" 
+                  dataKey="review" 
                   position="top" 
                   content={({ x, y, width, value, index }) => {
                     // Only show label for June (index 5)
@@ -177,10 +177,10 @@ const ReportChart = () => {
                 />
               </Bar>
             )}
-            {!hiddenBars.includes('sold') && (
-              <Bar dataKey="sold" fill="#FFCBA5" radius={[4, 4, 0, 0]} barSize={20}>
+            {!hiddenBars.includes('resolve') && (
+              <Bar dataKey="resolve" fill="#FFCBA5" radius={[4, 4, 0, 0]} barSize={20}>
                 <LabelList 
-                  dataKey="sold" 
+                  dataKey="resolve" 
                   position="top" 
                   content={({ x, y, width, value, index }) => {
                     // Only show label for September (index 8)

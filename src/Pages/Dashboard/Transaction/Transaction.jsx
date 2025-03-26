@@ -1,4 +1,3 @@
-// TransactionTable.jsx
 import React, { useState } from 'react';
 import { Table, Checkbox, Button, Select, Dropdown, Space, ConfigProvider } from 'antd';
 import { AiOutlineEye, AiOutlineDown, AiOutlineUp, AiOutlineFilter } from 'react-icons/ai';
@@ -13,7 +12,7 @@ const TransactionTable = () => {
   const [sortOrder, setSortOrder] = useState(null);
   const [filterVisible, setFilterVisible] = useState(false);
 
-  // Sample data
+  // Sample data generation
   const generateData = () => {
     return Array(1000).fill().map((_, index) => ({
       key: index,
@@ -29,20 +28,24 @@ const TransactionTable = () => {
 
   const [data, setData] = useState(generateData());
 
-  // Function to handle bulk delete
+  // Handle bulk delete
   const handleBulkDelete = () => {
     if (selectedRows.length === 0) return;
     
     const newData = data.filter(item => !selectedRows.includes(item.key));
     setData(newData);
     setSelectedRows([]);
+    
+    // Adjust current page if we deleted all items on the current page
+    if (newData.length <= (currentPage - 1) * pageSize) {
+      setCurrentPage(Math.max(1, currentPage - 1));
+    }
   };
 
-  // Function to handle sorting
+  // Handle sorting
   const handleSort = (field) => {
     let order = 'asc';
     
-    // If already sorting by this field, toggle the direction
     if (sortField === field) {
       order = sortOrder === 'asc' ? 'desc' : 'asc';
     }
@@ -51,6 +54,7 @@ const TransactionTable = () => {
     setSortOrder(order);
     
     const sortedData = [...data].sort((a, b) => {
+      if (a[field] === b[field]) return 0;
       if (order === 'asc') {
         return a[field] > b[field] ? 1 : -1;
       } else {
@@ -59,6 +63,7 @@ const TransactionTable = () => {
     });
     
     setData(sortedData);
+    setCurrentPage(1); // Reset to first page when sorting
   };
 
   // Filter menu items
@@ -215,8 +220,11 @@ const TransactionTable = () => {
           icon={<AiOutlineEye size={18} />} 
           className="eye-button"
           onClick={() => {
-            // Single delete functionality
             setData(data.filter(item => item.key !== record.key));
+            // Adjust current page if we deleted the last item on the current page
+            if (data.length % pageSize === 1 && currentPage > 1) {
+              setCurrentPage(currentPage - 1);
+            }
           }}
         />
       ),
@@ -224,12 +232,13 @@ const TransactionTable = () => {
   ];
 
   const handleSelectAll = (e) => {
+    const currentPageKeys = paginatedData.map(item => item.key);
     if (e.target.checked) {
-      // Get all keys from current page
-      const currentKeys = paginatedData.map(item => item.key);
-      setSelectedRows(currentKeys);
+      // Add all page items to selection (avoiding duplicates)
+      setSelectedRows([...new Set([...selectedRows, ...currentPageKeys])]);
     } else {
-      setSelectedRows([]);
+      // Remove all page items from selection
+      setSelectedRows(selectedRows.filter(key => !currentPageKeys.includes(key)));
     }
   };
 
@@ -239,15 +248,21 @@ const TransactionTable = () => {
     currentPage * pageSize
   );
 
-  // Custom table header with select all checkbox
+  // Check if all items on current page are selected
+  const isAllSelected = paginatedData.length > 0 && 
+    paginatedData.every(item => selectedRows.includes(item.key));
+
+  // Check if some items on current page are selected
+  const isIndeterminate = paginatedData.some(item => selectedRows.includes(item.key)) && 
+    !isAllSelected;
+
+  // Custom table header
   const tableHeader = () => (
     <div className="custom-table-header">
       <Checkbox 
         onChange={handleSelectAll}
-        checked={
-          paginatedData.length > 0 &&
-          paginatedData.every(item => selectedRows.includes(item.key))
-        }
+        checked={isAllSelected}
+        indeterminate={isIndeterminate}
       />
       <span className="header-title">Transaction</span>
       <div className="header-actions">
@@ -299,6 +314,12 @@ const TransactionTable = () => {
     </div>
   );
 
+  // Handle page size change
+  const handlePageSizeChange = (value) => {
+    setPageSize(Number(value));
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
   return (
     <ConfigProvider
       theme={{
@@ -307,47 +328,59 @@ const TransactionTable = () => {
         },
       }}
     >
-    <div className="transaction-table-container">
-      {tableHeader()}
-      <div className="table-container">
-        <Table 
-          columns={columns}
-          dataSource={paginatedData}
-          pagination={false}
-          rowClassName="transaction-row"
-          onChange={(pagination, filters, sorter) => {
-            if (sorter && sorter.field) {
-              handleSort(sorter.field);
-            }
-          }}
-        />
-      </div>
-      <div className="pagination-container">
-        <div className="page-info">
-          {data.length > 0 ? 
-            `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, data.length)} of ${data.length}` 
-            : 'No data'}
+      <div className="transaction-table-container">
+        {tableHeader()}
+        <div className="table-container">
+          <Table 
+            columns={columns}
+            dataSource={paginatedData}
+            pagination={false}
+            rowClassName="transaction-row"
+            onChange={(pagination, filters, sorter) => {
+              if (sorter && sorter.field) {
+                handleSort(sorter.field);
+              }
+            }}
+          />
         </div>
-        <div className="flex items-center gap-1 pagination-controls">
-          <Button 
-            type="text" 
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(currentPage - 1)}
-            className="pagination-button"
-          >
-           <IoIosArrowBack size={22} />
-          </Button>
-          <Button 
-            type="text" 
-            disabled={currentPage * pageSize >= data.length}
-            onClick={() => setCurrentPage(currentPage + 1)}
-            className="pagination-button"
-          >
-            <IoIosArrowForward size={22} />
-          </Button>
+        <div className="pagination-container">
+          <div className="flex items-center gap-4">
+            <Select 
+              defaultValue="10" 
+              style={{ width: 120 }} 
+              onChange={handlePageSizeChange}
+              options={[
+                { value: '10', label: '10 / page' },
+                { value: '20', label: '20 / page' },
+                { value: '50', label: '50 / page' },
+              ]}
+            />
+            <div className="page-info">
+              {data.length > 0 ? 
+                `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, data.length)} of ${data.length}` 
+                : 'No data'}
+            </div>
+          </div>
+          <div className="flex items-center gap-1 pagination-controls">
+            <Button 
+              type="text" 
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+              className="pagination-button"
+            >
+              <IoIosArrowBack size={22} />
+            </Button>
+            <Button 
+              type="text" 
+              disabled={currentPage * pageSize >= data.length}
+              onClick={() => setCurrentPage(currentPage + 1)}
+              className="pagination-button"
+            >
+              <IoIosArrowForward size={22} />
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
     </ConfigProvider>
   );
 };

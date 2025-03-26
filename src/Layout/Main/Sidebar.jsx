@@ -115,11 +115,6 @@ const Sidebar = ({ isCollapsed }) => {
           label: <Link to="/terms-and-conditions">Terms And Condition</Link>,
         },
         {
-          key: "/faq",
-          icon: getIcon("/faq"),
-          label: <Link to="/faq">FAQ</Link>,
-        },
-        {
           key: "/contact",
           icon: getIcon("/contact"),
           label: <Link to="/contact">Contact Us</Link>,

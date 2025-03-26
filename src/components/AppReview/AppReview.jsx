@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Table, Progress, Card, Typography, Checkbox, Row, Col, Button, Modal, Pagination, ConfigProvider, Tooltip } from 'antd';
-import { FaTrash, FaStar, FaStarHalfAlt, FaRegStar } from 'react-icons/fa';
+import { Table, Progress, Card, Typography, Checkbox, Row, Col, Button, Modal, ConfigProvider, Tooltip, Select } from 'antd';
+import { FaTrash, FaStar, FaStarHalfAlt, FaRegStar, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
 import './AppReview.css';
 
 const { Title, Text } = Typography;
@@ -75,18 +75,38 @@ const App = () => {
   };
 
   // Get current page data
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedReviews = allReviews.slice(startIndex, endIndex);
+  const getPaginatedReviews = () => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return allReviews.slice(startIndex, endIndex);
+  };
+
+  // Handle page size change
+  const handlePageSizeChange = (value) => {
+    setPageSize(Number(value));
+    setCurrentPage(1);
+  };
+
+  // Handle previous page
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Handle next page
+  const handleNextPage = () => {
+    if (currentPage < Math.ceil(allReviews.length / pageSize)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   // Handle select all on current page
   const handleSelectAll = (e) => {
-    const currentPageKeys = paginatedReviews.map(item => item.key);
+    const currentPageKeys = getPaginatedReviews().map(item => item.key);
     if (e.target.checked) {
-      // Add all page items to selection (avoiding duplicates)
       setSelectedRowKeys([...new Set([...selectedRowKeys, ...currentPageKeys])]);
     } else {
-      // Remove all page items from selection
       setSelectedRowKeys(selectedRowKeys.filter(key => !currentPageKeys.includes(key)));
     }
   };
@@ -101,11 +121,11 @@ const App = () => {
   };
 
   // Check if all items on current page are selected
-  const isAllSelected = paginatedReviews.length > 0 && 
-    paginatedReviews.every(item => selectedRowKeys.includes(item.key));
+  const isAllSelected = getPaginatedReviews().length > 0 && 
+    getPaginatedReviews().every(item => selectedRowKeys.includes(item.key));
 
   // Check if some items on current page are selected
-  const isIndeterminate = paginatedReviews.some(item => selectedRowKeys.includes(item.key)) && 
+  const isIndeterminate = getPaginatedReviews().some(item => selectedRowKeys.includes(item.key)) && 
     !isAllSelected;
 
   const handleDeleteClick = (record) => {
@@ -246,27 +266,56 @@ const App = () => {
         
         <Table 
           columns={columns} 
-          dataSource={paginatedReviews}
+          dataSource={getPaginatedReviews()}
           pagination={false}
           rowKey="key"
         />
         
-        <Row justify="space-between" align="middle" style={{ marginTop: '16px' }}>
-          <Col>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'end', 
+          alignItems: 'center', 
+          marginTop: '16px',
+          padding: '16px 0',
+          borderTop: '1px solid #f0f0f0'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
             {selectedRowKeys.length > 0 && (
-              <Text>{selectedRowKeys.length} item(s) selected</Text>
+              <Text style={{ marginRight: '16px' }}>{selectedRowKeys.length} item(s) selected</Text>
             )}
-          </Col>
-          <Col>
-            <Pagination
-              current={currentPage}
-              pageSize={pageSize}
-              total={allReviews.length}
-              onChange={(page) => setCurrentPage(page)}
-              showSizeChanger={false}
+            <Select 
+              defaultValue="10" 
+              style={{ width: 120 }} 
+              onChange={handlePageSizeChange}
+              options={[
+                { value: '10', label: '10 / page' },
+                { value: '20', label: '20 / page' },
+                { value: '50', label: '50 / page' },
+              ]}
             />
-          </Col>
-        </Row>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={{ margin: '0 16px' }}>
+              {allReviews.length === 0 
+                ? '0-0 of 0' 
+                : `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, allReviews.length)} of ${allReviews.length}`}
+            </span>
+            <Button 
+              type="text" 
+              icon={<FaAngleLeft />} 
+              disabled={currentPage === 1} 
+              onClick={handlePrevPage}
+              style={{ marginRight: '8px' }} 
+            />
+            <Button 
+              type="text" 
+              icon={<FaAngleRight />} 
+              disabled={currentPage >= Math.ceil(allReviews.length / pageSize)}
+              onClick={handleNextPage}
+            />
+          </div>
+        </div>
 
         <Modal
           title="Confirm Delete"
