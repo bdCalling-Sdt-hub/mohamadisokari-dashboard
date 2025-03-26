@@ -177,22 +177,11 @@ const Sidebar = ({ isCollapsed }) => {
   return (
     <div className={`bg-quilocoP flex flex-col h-screen ${isCollapsed ? "w-[80px]" : "w-[280px]"}`}>
       {/* Fixed Header */}
-      <Link 
-        to="/" 
-        className="sticky top-0 z-10 flex items-center justify-start px-2 py-4 text-white bg-quilocoP"
-        style={{ minHeight: '64px' }}
-      >
-        <div className="flex items-center justify-start gap-3 px-4 ">
-          <TbDashboard size={40} className="text-[#F97316]" />
-          {!isCollapsed && (
-            <p className="text-2xl font-semibold text-[#F97316]">Dashboard</p>
-          )}
-        </div>
-      </Link>
+      
 
       {/* Scrollable Menu */}
       <div 
-        className="flex-1 pt-10 overflow-y-auto" 
+        className="flex-1 pt-16 overflow-y-auto" 
         style={{ 
           scrollbarWidth: 'thin',
           scrollbarGutter: 'stable',

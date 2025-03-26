@@ -267,3 +267,29 @@ p {
 }
 
 
+/* Override Ant Design Pagination styles */
+.ant-pagination-item a {
+  color: #FF6600;
+}
+
+.ant-pagination-item:hover a {
+  color: #FF6600 !important;
+}
+
+.ant-pagination-item-active {
+  border-color: #FF6600 !important;
+}
+
+.ant-pagination-item-active a {
+  color: #FF6600 !important;
+}
+
+.ant-pagination-item-link:hover {
+  color: #FF6600 !important;
+  border-color: #FF6600 !important;
+}
+
+.ant-pagination-options-quick-jumper input:hover,
+.ant-pagination-options-quick-jumper input:focus {
+  border-color: #FF6600 !important;
+}

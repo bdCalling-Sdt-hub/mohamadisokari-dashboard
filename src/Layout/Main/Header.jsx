@@ -5,6 +5,7 @@ import { Badge, Avatar, ConfigProvider, Dropdown } from "antd";
 import { useUser } from "../../provider/User";
 import { CgMenu } from "react-icons/cg";
 import { DownOutlined } from "@ant-design/icons";
+import { TbDashboard } from "react-icons/tb";
 
 const Header = ({ toggleSidebar }) => {
   const { user } = useUser();
@@ -44,14 +45,23 @@ const Header = ({ toggleSidebar }) => {
           <div className="flex items-center justify-between">
             {/* Sidebar Toggle */}
             <div className="flex items-start">
-            <button 
+            {/* <button 
                 onClick={toggleSidebar} 
                 className="p-2 transition-colors rounded-lg hover:bg-blue-50">
                 <CgMenu 
                   size={28} 
                   className="text-[#FF6600] hover:text-[#FF6600] transition-colors" 
                 />
-              </button>
+              </button> */}
+
+              <div className="flex items-center justify-start gap-3 px-4 ">
+                        {/* <TbDashboard size={40} className="text-[#F97316]" /> */}
+                      
+                          <p className="text-2xl font-semibold text-[#F97316]">Dashboard</p>
+                 
+                      </div>
+
+
             </div>
 
             {/* Right Side Actions */}

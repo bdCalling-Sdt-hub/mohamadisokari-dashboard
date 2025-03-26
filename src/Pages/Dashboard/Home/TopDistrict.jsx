@@ -42,19 +42,34 @@ const TopDistrict = () => {
         />
       </div>
       
-      {/* Added flex-grow to make this section fill available space */}
-      <div className="flex-grow space-y-4 overflow-y-auto">
-        {currentDistricts.map((district, index) => (
-          <div key={index} className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className='w-3.5 h-3.5 border border-orange-500 rounded-full'></div>
-              <span className="ml-2 text-gray-800">{district.name}</span>
+      {/* Scrollable area with hidden scrollbar */}
+      <div 
+        className="flex-grow space-y-4 overflow-y-auto"
+        style={{
+          scrollbarWidth: 'none', /* Firefox */
+          msOverflowStyle: 'none', /* IE/Edge */
+        }}
+      >
+        {/* Custom CSS class for Webkit browsers */}
+        <style jsx>{`
+          .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
+        
+        <div className="pr-2 hide-scrollbar"> {/* Added pr-2 to prevent content clipping */}
+          {currentDistricts.map((district, index) => (
+            <div key={index} className="flex items-center justify-between mb-4"> {/* Changed space-y-4 to mb-4 */}
+              <div className="flex items-center">
+                <div className='w-3.5 h-3.5 border border-orange-500 rounded-full'></div>
+                <span className="ml-2 text-gray-800">{district.name}</span>
+              </div>
+              <div className="w-20 px-4 py-1 font-medium text-center text-white bg-orange-500 rounded-md">
+                {district.value}
+              </div>
             </div>
-            <div className="w-20 px-4 py-1 font-medium text-center text-white bg-orange-500 rounded-md">
-              {district.value}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
       
       <div className="flex items-center justify-between mt-4">

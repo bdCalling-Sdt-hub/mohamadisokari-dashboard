@@ -414,6 +414,8 @@ const UserManagement = () => {
           </Row>
         </div>
 
+
+
         <Table 
           rowSelection={rowSelection}
           columns={columns} 
@@ -426,11 +428,7 @@ const UserManagement = () => {
             total: filteredData.length,
             showSizeChanger: true,
             showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
-            onChange: (page) => setCurrentPage(page),
-            onShowSizeChange: (current, size) => {
-              setPageSize(size);
-              setCurrentPage(1); // Reset to first page when changing page size
-            }
+            onChange: (page) => setCurrentPage(page),  
           }}
           onChange={(pagination, filters, sorter) => {
             if (sorter && sorter.field) {
