@@ -1,13 +1,28 @@
-import { Button, Checkbox, Form, Input } from "antd";
+import { Checkbox, Form, Input } from "antd";
 import React from "react";
+import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import FormItem from "../../components/common/FormItem";
+import { useLoginMutation } from "../../features/auth/authApi";
+import { saveToken } from "../../features/auth/authService";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [Login] = useLoginMutation();
+
+
 
   const onFinish = async (values) => {
-    navigate("/");
+    try {
+      const response = await Login(values).unwrap();
+      if (response.success) {
+        saveToken(response?.data?.accessToken);
+        localStorage.setItem("userId", response?.data?.userId);
+        toast.success(response.message);
+        navigate("/");
+      }
+    } catch (error) {
+      toast.error(error?.data?.message);
+    }
   };
 
   return (
@@ -18,7 +33,7 @@ const Login = () => {
       </div>
       <Form onFinish={onFinish} layout="vertical">
         <Form.Item
-          name="email"
+          name="emailOrPhone"
           label={
             <p className="text-base font-normal text-black">Enter Your Email</p>
           }
@@ -65,10 +80,10 @@ const Login = () => {
         <div className="flex items-center justify-between">
           <Form.Item
             style={{ marginBottom: 0 }}
-            name="remember"
+            // name="remember"
             valuePropName="checked"
           >
-            <Checkbox 
+            <Checkbox
               className="custom-checkbox"
             >
               Remember me
@@ -101,7 +116,7 @@ const Login = () => {
           </button>
         </Form.Item>
       </Form>
-      
+
       <style jsx>{`
         .custom-checkbox .ant-checkbox-checked .ant-checkbox-inner {
           background-color: #FF7527 !important;

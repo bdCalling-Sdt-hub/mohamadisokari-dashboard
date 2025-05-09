@@ -1,11 +1,9 @@
 import { Button, Form, Input } from "antd";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { useChangePasswordMutation } from "../../redux/apiSlices/authSlice";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 
 const ChangePassword = () => {
-  const [changePassword, { isLoading }] = useChangePasswordMutation();
   const [newPassError, setNewPassError] = useState("");
   const [conPassError, setConPassError] = useState("");
   const [form] = Form.useForm();
@@ -33,22 +31,22 @@ const ChangePassword = () => {
   };
 
   const onFinish = async (values) => {
-    const errors = validatePasswordChange(values);
+    // const errors = validatePasswordChange(values);
 
-    if (Object.keys(errors).length === 0) {
-      try {
-        await changePassword({ ...values })
-          .unwrap()
-          .then(({ status, message, token }) => {
-            if (status) {
-              toast.success(message);
-              form.resetFields();
-            }
-          });
-      } catch (error) {
-        toast.error(error);
-      }
-    }
+    // if (Object.keys(errors).length === 0) {
+    //   try {
+    //     await changePassword({ ...values })
+    //       .unwrap()
+    //       .then(({ status, message, token }) => {
+    //         if (status) {
+    //           toast.success(message);
+    //           form.resetFields();
+    //         }
+    //       });
+    //   } catch (error) {
+    //     toast.error(error);
+    //   }
+    // }
   };
 
   return (

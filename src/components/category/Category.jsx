@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { Table, Button, Modal, Form, Input, Space, Image, Upload, ConfigProvider, Alert, Select } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Table, Button, Modal, Form, Input, Space, Image, Upload, ConfigProvider, Select, message } from 'antd';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import { CloseCircleOutlined, CloudUploadOutlined, ExclamationCircleOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { useCreateCategoryMutation, useDeleteCategoryMutation, useGetCategoryQuery, useUpdateCategoryMutation } from '../../features/category/CategoryApi';
+import { baseURL } from '../../utils/BaseURL';
 
 const CategoryList = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -15,80 +17,27 @@ const CategoryList = () => {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [data, setData] = useState([
-    {
-      key: '1',
-      name: 'Electronics',
-      icon: 'https://cdn-icons-png.flaticon.com/512/2777/2777154.png',
-      totalProducts: 15,
-    },
-    {
-      key: '2',
-      name: 'Clothing',
-      icon: 'https://cdn-icons-png.flaticon.com/512/863/863684.png',
-      totalProducts: 15,
-    },
-    {
-      key: '3',
-      name: 'Furniture',
-      icon: 'https://cdn-icons-png.flaticon.com/512/1040/1040993.png',
-      totalProducts: 15,
-    },
-    {
-      key: '4',
-      name: 'Books',
-      icon: 'https://cdn-icons-png.flaticon.com/512/2436/2436882.png',
-      totalProducts: 15,
-    },
-    {
-      key: '5',
-      name: 'Motor',
-      icon: 'https://cdn-icons-png.flaticon.com/512/2061/2061870.png',
-      totalProducts: 15,
-    },
-    {
-      key: '6',
-      name: 'Home Appliances',
-      icon: 'https://cdn-icons-png.flaticon.com/512/2289/2289946.png',
-      totalProducts: 15,
-    },
-    {
-      key: '7',
-      name: 'Health & Beauty',
-      icon: 'https://cdn-icons-png.flaticon.com/512/3588/3588295.png',
-      totalProducts: 15,
-    },
-    {
-      key: '8',
-      name: 'Art',
-      icon: 'https://cdn-icons-png.flaticon.com/512/2950/2950154.png',
-      totalProducts: 15,
-    },
-    {
-      key: '9',
-      name: 'Jewelry & Watches',
-      icon: 'https://cdn-icons-png.flaticon.com/512/3109/3109867.png',
-      totalProducts: 15,
-    },
-    {
-      key: '10',
-      name: 'Sports',
-      icon: 'https://cdn-icons-png.flaticon.com/512/857/857455.png',
-      totalProducts: 15,
-    },
-    {
-      key: '11',
-      name: 'Toys',
-      icon: 'https://cdn-icons-png.flaticon.com/512/2753/2753541.png',
-      totalProducts: 15,
-    },
-    {
-      key: '12',
-      name: 'Food',
-      icon: 'https://cdn-icons-png.flaticon.com/512/3075/3075977.png',
-      totalProducts: 15,
-    },
-  ]);
+  // RTK Query hooks
+  const { data: categories, isLoading: isCategoryLoading, refetch } = useGetCategoryQuery();
+  const [deleteCategory, { isLoading: isDeleting }] = useDeleteCategoryMutation(); 
+  const [updateCategory, { isLoading: isUpdating }] = useUpdateCategoryMutation();
+  const [createCategory, { isLoading: isCreating }] = useCreateCategoryMutation();
+
+  // Transform API data to match table format
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    if (categories) {
+      const formattedData = categories?.data?.map((category) => ({
+        key: category._id,
+        name: category.name,
+        image: category.image,
+        totalProducts: category.totalProducts || 0,
+        originalData: category
+      }));
+      setData(formattedData);
+    }
+  }, [categories]);
 
   // Function to show modal for adding new category
   const showAddModal = () => {
@@ -102,10 +51,10 @@ const CategoryList = () => {
   const showEditModal = (record) => {
     setIsEditing(true);
     setEditingKey(record.key);
-    setUploadedImage(record.icon);
+    setUploadedImage(record.image);
     form.setFieldsValue({
       name: record.name,
-      icon: record.icon,
+      image: record.image,
     });
     setIsEditModalVisible(true);
   };
@@ -118,56 +67,39 @@ const CategoryList = () => {
 
   // Handle bulk delete
   const handleBulkDelete = () => {
+    if (selectedRowKeys.length === 0) return;
     setDeleteKey(null);
     setIsModalVisible(true);
   };
 
-  // Handle image upload
-  const handleImageUpload = (info) => {
-    if (info.file.status === 'done') {
-      setUploadedImage(info.file.response?.url || 'https://cdn-icons-png.flaticon.com/512/1170/1170577.png');
-    }
-  };
-
-  // Mock function for image upload
-  const customRequest = ({ onSuccess }) => {
-    setTimeout(() => {
-      onSuccess({ url: 'https://cdn-icons-png.flaticon.com/512/1170/1170577.png' });
-    }, 500);
-  };
-
   // Handle form submission
-  const handleFormSubmit = (values) => {
-    const finalIcon = uploadedImage || values.icon || 'https://cdn-icons-png.flaticon.com/512/1170/1170577.png';
-    
-    if (isEditing) {
-      // Update existing category
-      const newData = [...data];
-      const index = newData.findIndex(item => item.key === editingKey);
+  const handleFormSubmit = async (values) => {
+    try {
+      const formData = new FormData();
+      formData.append('name', values.name);
       
-      if (index > -1) {
-        newData[index] = {
-          ...newData[index],
-          name: values.name,
-          icon: finalIcon,
-        };
-        setData(newData);
+      if (uploadedImage instanceof File) {
+        formData.append('image', uploadedImage);
       }
-    } else {
-      // Add new category
-      const newData = [...data];
-      newData.push({
-        key: `${newData.length + 1}`,
-        name: values.name,
-        icon: finalIcon,
-        totalProducts: 0,
-      });
-      setData(newData);
+
+      if (isEditing) {
+        await updateCategory({
+          id: editingKey,
+          data: formData
+        }).unwrap();
+        message.success('Category updated successfully');
+      } else {
+        await createCategory(formData).unwrap();
+        message.success('Category created successfully');
+      }
+      
+      refetch();
+      setIsEditModalVisible(false);
+      form.resetFields();
+      setUploadedImage(null);
+    } catch (err) {
+      message.error(err.data?.message || 'Something went wrong');
     }
-    
-    setIsEditModalVisible(false);
-    form.resetFields();
-    setUploadedImage(null);
   };
 
   // Handle modal cancel for edit/add modal
@@ -178,21 +110,25 @@ const CategoryList = () => {
   };
 
   // Handle delete confirmation
-  const handleDeleteConfirm = () => {
-    if (deleteKey) {
-      // Single item deletion
-      const newData = data.filter(item => item.key !== deleteKey);
-      setData(newData);
-      setSelectedRowKeys(selectedRowKeys.filter(key => key !== deleteKey));
-    } else if (selectedRowKeys.length > 0) {
-      // Bulk deletion
-      const newData = data.filter(item => !selectedRowKeys.includes(item.key));
-      setData(newData);
+  const handleDeleteConfirm = async () => {
+    try {
+      if (deleteKey) {
+        await deleteCategory(deleteKey).unwrap();
+        message.success('Category deleted successfully');
+      } else if (selectedRowKeys.length > 0) {
+        for (const key of selectedRowKeys) {
+          await deleteCategory(key).unwrap();
+        }
+        message.success(`${selectedRowKeys.length} categories deleted successfully`);
+      }
+      
+      refetch();
+      setIsModalVisible(false);
+      setDeleteKey(null);
       setSelectedRowKeys([]);
+    } catch (err) {
+      message.error(err.data?.message || 'Failed to delete category');
     }
-    
-    setIsModalVisible(false);
-    setDeleteKey(null);
   };
 
   // Handle delete modal cancel
@@ -226,6 +162,13 @@ const CategoryList = () => {
     }
   };
 
+  // Handle image upload
+  const handleImageUpload = (info) => {
+    if (info.file.status === 'done') {
+      setUploadedImage(info.file.originFileObj);
+    }
+  };
+
   // Calculate paginated data
   const getPaginatedData = () => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -241,10 +184,18 @@ const CategoryList = () => {
       key: 'name',
     },
     {
-      title: 'Icon',
-      dataIndex: 'icon',
-      key: 'icon',
-      render: icon => <Image src={icon} alt="icon" width={40} height={40} />,
+      title: 'Image',
+      dataIndex: 'image',
+      key: 'image',
+      render: (image) => (
+        <Image 
+          src={`${baseURL}${image}`} 
+          alt="category" 
+          width={40} 
+          height={40} 
+          style={{ objectFit: 'cover' }}
+        />
+      ),
     },
     {
       title: 'Total Products',
@@ -264,7 +215,7 @@ const CategoryList = () => {
           <Button 
             type="text" 
             icon={<FaTrash style={{ color: '#ff4d4f' }} />} 
-            onClick={() => showDeleteConfirmModal(record.key)} 
+            onClick={() => showDeleteConfirmModal(record.key)}
           />
         </Space>
       ),
@@ -281,12 +232,17 @@ const CategoryList = () => {
         danger 
         onClick={handleBulkDelete}
         style={{ marginLeft: '10px' }}
+        loading={isDeleting}
       >
         <FaTrash style={{ marginRight: '8px' }} />
         Delete {selectedRowKeys.length} Selected
       </Button>
     );
   };
+
+  if (isCategoryLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <ConfigProvider
@@ -309,6 +265,7 @@ const CategoryList = () => {
               type="primary" 
               style={{ backgroundColor: '#ff6600', borderColor: '#ff6600' }} 
               onClick={showAddModal}
+              loading={isCreating}
             >
               <FaPlus style={{ marginRight: '8px' }} /> Add Category
             </Button>
@@ -324,6 +281,7 @@ const CategoryList = () => {
           columns={columns}
           dataSource={getPaginatedData()}
           pagination={false}
+          loading={isCategoryLoading}
         />
 
         {/* Custom Pagination */}
@@ -376,6 +334,7 @@ const CategoryList = () => {
           okButtonProps={{ danger: true }}
           cancelText="Cancel"
           centered
+          confirmLoading={isDeleting}
         >
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
             <ExclamationCircleOutlined 
@@ -418,10 +377,17 @@ const CategoryList = () => {
               />
             </Form.Item>
             
-            <Form.Item label="Category Icon">
+            <Form.Item label="Category Image">
               {uploadedImage ? (
                 <div style={{ position: 'relative', display: 'inline-block' }}>
-                  <Image src={uploadedImage} alt="Uploaded" width={100} />
+                  <Image 
+                    src={uploadedImage instanceof File 
+                      ? URL.createObjectURL(uploadedImage) 
+                      : `${baseURL}${uploadedImage}`} 
+                    alt="Uploaded" 
+                    width={100}
+                    style={{ objectFit: 'cover' }}
+                  />
                   <CloseCircleOutlined
                     style={{ 
                       position: 'absolute', 
@@ -437,23 +403,21 @@ const CategoryList = () => {
                   />
                 </div>
               ) : (
-                <Form.Item
-                  name="icon"
-                  noStyle
+                <Upload
+                  name="image"
+                  listType="picture-card"
+                  showUploadList={false}
+                  beforeUpload={(file) => {
+                    setUploadedImage(file);
+                    return false;
+                  }}
+                  accept="image/*"
                 >
-                  <Upload
-                    name="image"
-                    listType="picture-card"
-                    showUploadList={false}
-                    customRequest={customRequest}
-                    onChange={handleImageUpload}
-                  >
-                    <div style={{ padding: '10px' }}>
-                      <CloudUploadOutlined style={{ fontSize: 24 }} />
-                      <div>Upload</div>
-                    </div>
-                  </Upload>
-                </Form.Item>
+                  <div style={{ padding: '10px' }}>
+                    <CloudUploadOutlined style={{ fontSize: 24 }} />
+                    <div>Upload</div>
+                  </div>
+                </Upload>
               )}
             </Form.Item>
 
@@ -462,6 +426,7 @@ const CategoryList = () => {
                 type="default"
                 onClick={handleEditModalCancel}
                 style={{ marginRight: '10px' }}
+                disabled={isCreating || isUpdating}
               >
                 Cancel
               </Button>
@@ -469,6 +434,7 @@ const CategoryList = () => {
                 type="primary" 
                 htmlType="submit"
                 style={{ backgroundColor: '#ff6600', borderColor: '#ff6600' }}
+                loading={isCreating || isUpdating}
               >
                 Save
               </Button>

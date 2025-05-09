@@ -2,16 +2,10 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaRegBell, FaUser } from "react-icons/fa6";
 import { Badge, Avatar, ConfigProvider, Dropdown, Tooltip } from "antd";
-import { useUser } from "../../provider/User";
-import { CgMenu } from "react-icons/cg";
 import { DownOutlined } from "@ant-design/icons";
-import { TbDashboard } from "react-icons/tb";
 
 const Header = ({ toggleSidebar }) => {
-  const { user } = useUser();
-  const src = user?.image?.startsWith("https")
-    ? user?.image
-    : `https://your-image-source/${user?.image}`;
+
 
   const userMenuItems = [
     { 
@@ -80,14 +74,14 @@ const Header = ({ toggleSidebar }) => {
               >
                 <div className="flex items-center p-2 transition-colors rounded-lg cursor-pointer hover:bg-gray-50">
                   <Avatar 
-                    src={src} 
+                    src={""} 
                     size={48} 
                     className="mr-3 border-2 border-blue-100" 
                     icon={<FaUser />}
                   />
                   <div>
                     <div className="font-semibold text-gray-800">
-                      {`${user?.firstName} ${user?.lastName}`}
+                      {/* {`${user?.firstName} ${user?.lastName}`} */}
                       <DownOutlined className="ml-2 text-xs text-gray-500" />
                     </div>
                     <p className="text-xs text-gray-500">Super Admin</p>

@@ -3,21 +3,13 @@ import React, { useEffect, useState } from "react";
 import { MdOutlineAddPhotoAlternate } from "react-icons/md";
 import { Button, Form, Input } from "antd";
 
-import { useUser } from "../../../provider/User";
 
 const UserProfile = () => {
   const [form] = Form.useForm();
-  const { user } = useUser();
   const [image, setImage] = useState(
     "https://avatars.design/wp-content/uploads/2021/02/corporate-avatars-TN-1.jpg"
   );
   const [imgURL, setImgURL] = useState(image);
-
-  useEffect(() => {
-    if (user) {
-      form.setFieldsValue(user);
-    }
-  }, [user, form]);
 
   const handleSubmit = (values) => {
     console.log(values);

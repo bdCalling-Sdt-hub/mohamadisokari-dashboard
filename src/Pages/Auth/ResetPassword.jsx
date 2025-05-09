@@ -1,15 +1,33 @@
-import { Button, Form, Input, ConfigProvider, Typography } from "antd";
+import { Button, ConfigProvider, Form, Input, Typography } from "antd";
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useResetPasswordMutation } from "../../features/auth/authApi";
 
 const { Title, Text } = Typography;
 
 const ResetPassword = () => {
-  const email = new URLSearchParams(location.search).get("email");
+  const location = useLocation();
+  const token = new URLSearchParams(location.search).get("verifyToken");
   const navigate = useNavigate();
+  const [resetPassword, { isLoading }] = useResetPasswordMutation();
 
   const onFinish = async (values) => {
-    navigate(`/auth/login`);
+    try {
+      // Include the token in the request body
+      const response = await resetPassword({
+        token,
+        newPassword: values.newPassword,
+        confirmPassword: values.confirmPassword
+      }).unwrap();
+
+      if (response.success) {
+        toast.success(response.message);
+        navigate("/auth/login");
+      }
+    } catch (error) {
+      toast.error(error?.data?.message || "Password reset failed");
+    }
   };
 
   return (
@@ -22,7 +40,7 @@ const ResetPassword = () => {
           Create a new password for your account
         </Text>
       </div>
-      
+
       <ConfigProvider
         theme={{
           token: {
@@ -53,6 +71,10 @@ const ResetPassword = () => {
               {
                 required: true,
                 message: "Please input your new Password!",
+              },
+              {
+                min: 8,
+                message: "Password must be at least 8 characters!",
               },
             ]}
           >
@@ -96,6 +118,7 @@ const ResetPassword = () => {
 
           <Form.Item>
             <Button
+              loading={isLoading}
               type="primary"
               htmlType="submit"
               block

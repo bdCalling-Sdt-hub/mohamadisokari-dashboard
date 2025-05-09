@@ -1,15 +1,11 @@
 import React, { useState } from "react";
 import { ConfigProvider, Pagination, Badge } from "antd";
-import {
-  useNotificationQuery,
-  useReadMutation,
-} from "../../redux/apiSlices/notificationSlice";
+
 import toast from "react-hot-toast";
 import { FaBell, FaCheck, FaRegBell } from "react-icons/fa";
 
 const Notifications = () => {
   const [page, setPage] = useState(1);
-  const [read] = useReadMutation();
 
   const handleRead = async () => {
     try {

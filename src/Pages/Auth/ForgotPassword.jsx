@@ -1,12 +1,25 @@
 import { Button, Form, Input, ConfigProvider } from "antd";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useForgotPasswordMutation } from "../../features/auth/authApi";
+import toast from "react-hot-toast";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
 
+  const [ForgotPassword, { isLoading }] = useForgotPasswordMutation();
+
+
   const onFinish = async (values) => {
-    navigate(`/auth/verify-otp?email=${values?.email}`);
+    try {
+      const response = await ForgotPassword(values).unwrap();
+      if (response.success) {
+        toast.success(response.message);
+        navigate(`/auth/verify-otp?email=${values?.emailOrPhone}`);
+      }
+    } catch (error) {
+      toast.error(error?.data?.message);
+    }
   };
 
   return (
@@ -30,7 +43,7 @@ const ForgotPassword = () => {
         <Form layout="vertical" onFinish={onFinish}>
           <Form.Item
             label={<p className="text-base font-normal">Email</p>}
-            name="email"
+            name="emailOrPhone"
             id="email"
             rules={[
               {
@@ -51,22 +64,21 @@ const ForgotPassword = () => {
           </Form.Item>
 
           <Form.Item>
-            <button
+            <Button
               htmlType="submit"
-              type="submit"
+              type="primary"
+              loading={isLoading}
               style={{
                 width: "100%",
                 height: 45,
-                color: "white",
                 fontWeight: "400px",
                 fontSize: "18px",
-
                 marginTop: 20,
               }}
-              className="flex items-center justify-center bg-smart rounded-lg"
+              className="flex items-center justify-center bg-smart  rounded-lg"
             >
               Send OTP
-            </button>
+            </Button>
           </Form.Item>
         </Form>
       </ConfigProvider>
