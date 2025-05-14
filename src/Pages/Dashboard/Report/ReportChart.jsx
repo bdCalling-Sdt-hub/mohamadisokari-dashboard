@@ -1,77 +1,145 @@
-import React, { useState } from 'react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend,
-  LabelList, 
-  ResponsiveContainer 
-} from 'recharts';
 import { Select } from 'antd';
+import { useState } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from 'recharts';
+import { useGetReportChartQuery } from '../../../features/Report/ReportApi';
 
 const ReportChart = () => {
-  // Sample data with district and year information
-  const data = [
-    { name: 'Jan', district: 'North', review: 150, resolve: 20, year: 2025 },
-    { name: 'Feb', district: 'North', review: 80, resolve: 50, year: 2025 },
-    { name: 'Mar', district: 'South', review: 250, resolve: 35, year: 2025 },
-    { name: 'Apr', district: 'South', review: 270, resolve: 30, year: 2024 },
-    { name: 'May', district: 'East', review: 320, resolve: 25, year: 2024 },
-    { name: 'Jun', district: 'East', review: 380, resolve: 55, year: 2024 },
-    { name: 'Jul', district: 'West', review: 270, resolve: 40, year: 2023 },
-    { name: 'Aug', district: 'West', review: 350, resolve: 60, year: 2023 },
-    { name: 'Sep', district: 'North', review: 200, resolve: 50, year: 2022 },
-    { name: 'Oct', district: 'South', review: 250, resolve: 35, year: 2022 },
-    { name: 'Nov', district: 'East', review: 270, resolve: 30, year: 2021 },
-    { name: 'Dec', district: 'West', review: 270, resolve: 70, year: 2020 }
-  ];
-
-  const [selectedDistrict, setSelectedDistrict] = useState('All Districts');
-  const [selectedYear, setSelectedYear] = useState('All Years');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  // Get current month in YYYY-MM format
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = String(currentDate.getMonth() + 1).padStart(2, '0');
+  const [selectedMonth, setSelectedMonth] = useState(`${currentYear}-${currentMonth}`);
   const [hiddenBars, setHiddenBars] = useState([]);
-  
-  // District options
+
   const districtOptions = [
-    { value: 'North', label: 'North' },
-    { value: 'South', label: 'South' },
-    { value: 'East', label: 'East' },
-    { value: 'West', label: 'West' },
+    // Banaadir (Mogadishu)
+    { value: 'Abdiaziz', label: 'Abdiaziz' },
+    { value: 'Bondhere', label: 'Bondhere' },
+    { value: 'Daynile', label: 'Daynile' },
+    { value: 'Dharkenley', label: 'Dharkenley' },
+    { value: 'Hamar-Jajab', label: 'Hamar-Jajab' },
+    { value: 'Hamar-Weyne', label: 'Hamar-Weyne' },
+    { value: 'Hodan', label: 'Hodan' },
+    { value: 'Howl-Wadag', label: 'Howl-Wadag' },
+    { value: 'Karan', label: 'Karan' },
+    { value: 'Shangani', label: 'Shangani' },
+    { value: 'Shingani', label: 'Shingani' },
+    { value: 'Waberi', label: 'Waberi' },
+    { value: 'Wadajir', label: 'Wadajir' },
+    { value: 'Wartanabada', label: 'Wartanabada' },
+    { value: 'Yaqshid', label: 'Yaqshid' },
+
+    // Galmudug
+    { value: 'Adado', label: 'Adado' },
+    { value: 'Balad', label: 'Balad' },
+    { value: 'Dhusamareb', label: 'Dhusamareb' },
+    { value: 'El Dher', label: 'El Dher' },
+    { value: 'El Buur', label: 'El Buur' },
+    { value: 'Galgaduud', label: 'Galgaduud' },
+    { value: 'Guriel', label: 'Guriel' },
+    { value: 'Harardhere', label: 'Harardhere' },
+    { value: 'Hobyo', label: 'Hobyo' },
+
+    // Hirshabelle
+    { value: 'Belet Weyne', label: 'Belet Weyne' },
+    { value: 'Buloburde', label: 'Buloburde' },
+    { value: 'Jalalassi', label: 'Jalalassi' },
+    { value: 'Mahas', label: 'Mahas' },
+    { value: 'Mataban', label: 'Mataban' },
+
+    // Jubaland
+    { value: 'Afmadow', label: 'Afmadow' },
+    { value: 'Badhadhe', label: 'Badhadhe' },
+    { value: 'Buale', label: 'Buale' },
+    { value: 'Bardera', label: 'Bardera' },
+    { value: 'Dhobley', label: 'Dhobley' },
+    { value: 'El Wak', label: 'El Wak' },
+    { value: 'Garbaharey', label: 'Garbaharey' },
+    { value: 'Kismayo', label: 'Kismayo' },
+    { value: 'Luuq', label: 'Luuq' },
+
+    // Puntland
+    { value: 'Bosaso', label: 'Bosaso' },
+    { value: 'Galkayo', label: 'Galkayo' },
+    { value: 'Garowe', label: 'Garowe' },
+    { value: 'Qardho', label: 'Qardho' },
+    { value: 'Burtinle', label: 'Burtinle' },
+    { value: 'Eyl', label: 'Eyl' },
+    { value: 'Ufayn', label: 'Ufayn' },
+    { value: 'Bandarbeyla', label: 'Bandarbeyla' },
+    { value: 'Iskushuban', label: 'Iskushuban' },
+
+    // South West
+    { value: 'Baidoa', label: 'Baidoa' },
+    { value: 'Barawe', label: 'Barawe' },
+    { value: 'Bur Hakaba', label: 'Bur Hakaba' },
+    { value: 'Dinsoor', label: 'Dinsoor' },
+    { value: 'Qansax Dheere', label: 'Qansax Dheere' },
+    { value: 'Tiyeglow', label: 'Tiyeglow' },
+    { value: 'Wanlaweyn', label: 'Wanlaweyn' },
+    { value: 'Xudur', label: 'Xudur' },
+
+    // Somaliland
+    { value: 'Berbera', label: 'Berbera' },
+    { value: 'Burao', label: 'Burao' },
+    { value: 'Borama', label: 'Borama' },
+    { value: 'Erigavo', label: 'Erigavo' },
+    { value: 'Gabiley', label: 'Gabiley' },
+    { value: 'Hargeisa', label: 'Hargeisa' },
+    { value: 'Las Anod', label: 'Las Anod' },
+    { value: 'Zeila', label: 'Zeila' }
   ];
 
-  // Generate year options for the last 5 years from current year (2025)
-  const currentYear = 2025;
-  const yearOptions = Array.from({ length: 6 }, (_, i) => ({
-    value: currentYear - i,
-    label: (currentYear - i).toString()
-  }));
+  // Generate month options for the last 12 months
+  const monthOptions = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return {
+      value: `${year}-${month}`,
+      label: `${year}-${month}`
+    };
+  }).reverse();
 
-  // Filter data based on selected district and year
-  const filteredData = data.filter(item => {
-    const districtMatch = selectedDistrict === 'All Districts' || item.district === selectedDistrict;
-    const yearMatch = selectedYear === 'All Years' || item.year === selectedYear;
-    return districtMatch && yearMatch;
+  // The key fix: Pass parameters correctly to useGetReportChartQuery
+  // RTK Query expects a single argument, so we pass an object containing all params
+  const { data, isLoading, error } = useGetReportChartQuery({
+    location: selectedDistrict,
+    month: selectedMonth
   });
 
-  // Updated CustomTooltip component to show both values
+  // Transform API data to match chart expectations with proper error handling
+  const chartData = data?.data ? Object.entries(data.data).map(([key, value]) => ({
+    name: `Day ${key}`,
+    review: value['under review'] || 0,
+    resolve: value.resolved || 0
+  })) : [];
+
+  // Updated CustomTooltip component
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      // Get the month's data
-      const monthData = filteredData.find(item => item.name === label);
-      
       return (
-        <div className="px-4 py-2 bg-white border border-gray-200 rounded-md shadow-lg h">
+        <div className="px-4 py-2 bg-white border border-gray-200 rounded-md shadow-lg">
           <p className="m-0 font-bold text-gray-700">{label}</p>
           <div className="mt-1">
             <div className="flex items-center mb-1">
               <div className="w-3 h-3 mr-2 rounded-full" style={{ backgroundColor: '#FF6B35' }}></div>
-              <p className="m-0"><span className="font-medium">Under Review:</span> {monthData.review}</p>
+              <p className="m-0"><span className="font-medium">Under Review:</span> {payload[0].value}</p>
             </div>
             <div className="flex items-center">
               <div className="w-3 h-3 mr-2 rounded-full" style={{ backgroundColor: '#FFCBA5' }}></div>
-              <p className="m-0"><span className="font-medium">Resolve:</span> {monthData.resolve}</p>
+              <p className="m-0"><span className="font-medium">Resolved:</span> {payload[1].value}</p>
             </div>
           </div>
         </div>
@@ -91,65 +159,71 @@ const ReportChart = () => {
     });
   };
 
+  if (isLoading) return <div className="flex justify-center items-center h-64">Loading...</div>;
+  if (error) return <div className="flex justify-center items-center h-64">Error loading data: {error.message || 'Could not fetch report data'}</div>;
+
   return (
     <div className="flex flex-col justify-start w-full h-full p-6 mx-auto bg-white rounded-lg shadow-sm">
       <div className="flex flex-col items-start justify-between md:flex-row md:items-center">
-        <h2 className="mb-4 text-2xl font-bold text-gray-800 md:mb-0">Products</h2>
+        <h2 className="mb-4 text-2xl font-bold text-gray-800 md:mb-0">Report Statistics</h2>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Select
             value={selectedDistrict}
             onChange={setSelectedDistrict}
             style={{ width: 200 }}
-            placeholder="District"
+            placeholder="Select District"
             options={[
-              { value: 'All Districts', label: 'All Districts' },
+              { value: '', label: 'All Districts' },
               ...districtOptions
             ]}
           />
           <Select
-            value={selectedYear}
-            onChange={setSelectedYear}
+            value={selectedMonth}
+            onChange={setSelectedMonth}
             style={{ width: 200 }}
-            placeholder="Year"
-            options={[
-              { value: 'All Years', label: 'All Years' },
-              ...yearOptions
-            ]}
+            placeholder="Select Month"
+            options={monthOptions}
           />
         </div>
       </div>
-      
-      <div className="flex flex-grow w-full">
-        <ResponsiveContainer  width="100%" height="90%" minHeight={550}>
+
+      <div className="flex flex-grow w-full mt-6">
+        <ResponsiveContainer width="100%" height={550}>
           <BarChart
-            data={filteredData}
-            margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+            data={chartData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
-            <XAxis 
-              dataKey="name" 
-              tick={{ fontSize: 12, fill: '#666' }} 
+            <XAxis
+              dataKey="name"
+              tick={{ fontSize: 12, fill: '#666' }}
               axisLine={{ stroke: '#e0e0e0' }}
               tickLine={false}
             />
-            <YAxis 
+            <YAxis
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 12, fill: '#666' }}
-              domain={[0, 500]}
-              ticks={[0, 100, 200, 300, 400, 500]}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }} />
-            <Legend 
+            <Legend
               align="center"
               verticalAlign="bottom"
               wrapperStyle={{ paddingTop: '20px' }}
               onClick={(e) => handleLegendClick(e.dataKey)}
               payload={[
-                { value: 'Under Review', dataKey: 'review', type: 'circle', color: '#FF6B35', 
-                  payload: { strokeDasharray: hiddenBars.includes('available') ? '3 3' : '0', fill: '#FF6B35' } },
-                { value: 'resolve', dataKey: 'resolve', type: 'circle', color: '#FFCBA5', 
-                  payload: { strokeDasharray: hiddenBars.includes('sold') ? '3 3' : '0', fill: '#FFCBA5' } },
+                {
+                  value: 'Under Review',
+                  dataKey: 'review',
+                  type: 'circle',
+                  color: '#FF6B35'
+                },
+                {
+                  value: 'Resolved',
+                  dataKey: 'resolve',
+                  type: 'circle',
+                  color: '#FFCBA5'
+                },
               ]}
               formatter={(value, entry) => (
                 <span style={{ color: hiddenBars.includes(entry.dataKey) ? '#999' : '#333', cursor: 'pointer' }}>
@@ -158,44 +232,10 @@ const ReportChart = () => {
               )}
             />
             {!hiddenBars.includes('review') && (
-              <Bar dataKey="review" fill="#FF6B35" radius={[4, 4, 0, 0]} barSize={20}>
-                <LabelList 
-                  dataKey="review" 
-                  position="top" 
-                  content={({ x, y, width, value, index }) => {
-                    // Only show label for June (index 5)
-                    if (index !== 5) return null;
-                    return (
-                      <g>
-                        <rect x={x + width/2 - 20} y={y - 26} width="40" height="22" rx="5" fill="#FF6B35" />
-                        <text x={x + width/2} y={y - 12} fill="#fff" textAnchor="middle" dominantBaseline="middle" fontSize="12">
-                          {value}
-                        </text>
-                      </g>
-                    );
-                  }}
-                />
-              </Bar>
+              <Bar dataKey="review" fill="#FF6B35" radius={[4, 4, 0, 0]} barSize={20} />
             )}
             {!hiddenBars.includes('resolve') && (
-              <Bar dataKey="resolve" fill="#FFCBA5" radius={[4, 4, 0, 0]} barSize={20}>
-                <LabelList 
-                  dataKey="resolve" 
-                  position="top" 
-                  content={({ x, y, width, value, index }) => {
-                    // Only show label for September (index 8)
-                    if (index !== 8) return null;
-                    return (
-                      <g>
-                        <rect x={x + width/2 - 20} y={y - 26} width="40" height="22" rx="5" fill="#FFCBA5" />
-                        <text x={x + width/2} y={y - 12} fill="#000" textAnchor="middle" dominantBaseline="middle" fontSize="12">
-                          {value}
-                        </text>
-                      </g>
-                    );
-                  }}
-                />
-              </Bar>
+              <Bar dataKey="resolve" fill="#FFCBA5" radius={[4, 4, 0, 0]} barSize={20} />
             )}
           </BarChart>
         </ResponsiveContainer>

@@ -1,29 +1,29 @@
-import React from "react";
-import SidebarContent from "./SidebarContent";
-// import { Outlet, useParams } from "react-router-dom";
-import ChatRoom from "./ChatRoom";
-import ChatHeader from "./ChatHeader";
+import { useState } from "react";
+import { IoIosArrowBack } from "react-icons/io";
+import { useParams } from "react-router-dom";
+import ChatList from "./ChatList";
+import ChatWindow from "./ChatWindow";
 
 function SupportChat() {
+  const [isChatActive, setIsChatActive] = useState(false);
+  const { chatRoomId } = useParams();
+
+
+
   return (
-    <div className="w-full h-screen flex relative rounded-lg">
-      {/* Sidebar */}
-      <div className="w-[25%] h-[87%] bg-slate-300  rounded-l-lg">
-        <SidebarContent />
+    <div className="container mx-auto gap-3 my-10 flex flex-col lg:flex-row">
+      <div className={`w-full lg:w-3/12 bg-white ${isChatActive ? 'hidden lg:block' : ''}`}>
+        <ChatList status={isChatActive} setIsChatActive={setIsChatActive} />
       </div>
 
-      {/* Chat Area */}
-      <div className="w-[75%] bg-green-400-200">
-        {/* <div className="h-[100px] bg-blue-400">
-          <ChatHeader />
-        </div> */}
-        <div className="h-[87%] bg-slate-200 rounded-r-lg">
-          <ChatRoom />
-          {/* <Outlet /> */}
-        </div>
-        {/* <div className="w-full absolute bottom-0 h-[100px] bg-amber-400">
-          keyboard
-        </div> */}
+      <div className={`${isChatActive ? '' : 'hidden lg:block'} border rounded-lg shadow w-full lg:w-2/3 flex flex-col bg-gray-50 border-gray-200`}>
+        <button
+          className={`lg:hidden ${isChatActive ? 'block' : ''}`}
+          onClick={() => setIsChatActive(false)}
+        >
+          <IoIosArrowBack className="text-2xl m-2" />
+        </button>
+        <ChatWindow id={chatRoomId} />
       </div>
     </div>
   );

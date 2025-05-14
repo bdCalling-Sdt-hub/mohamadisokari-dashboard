@@ -23,8 +23,6 @@ import CategoryList from "../Pages/Dashboard/Service/CategoryList/CategoryList.j
 import ServiceList from "../Pages/Dashboard/Service/ServiceList/ServiceList.jsx";
 import SpecificService from "../Pages/Dashboard/DyanamicPage/SpecificService.jsx";
 import SupportChat from "../Pages/Dashboard/SupportChat/SupportChat.jsx";
-import ChatRoom from "../Pages/Dashboard/SupportChat/ChatRoom.jsx";
-import DiscountCoupon from "../Pages/Dashboard/DiscountCoupon/DiscountCoupon.jsx";
 import Report from "../Pages/Dashboard/Report/Report.jsx";
 import Slider from "../Pages/Dashboard/Slider/Slider.jsx";
 import OnboardingScreeen from "../Pages/Dashboard/OnboardingScreen/OnboardingScreeen.jsx";
@@ -35,6 +33,7 @@ import ProductDetails from "../components/product/ProductDetails.jsx";
 import ProductManagement from "../components/product/productManagement.jsx";
 import AppReview from "../components/AppReview/AppReview.jsx";
 import Category from "../components/category/Category.jsx";
+import ChatList from "../Pages/Dashboard/SupportChat/ChatList.jsx";
 
 const router = createBrowserRouter([
   {
@@ -59,7 +58,7 @@ const router = createBrowserRouter([
         path: "/chat/:chatRoomId", 
         element: <SupportChat />, 
         children: [
-          { path: ":chatRoomId", element: <ChatRoom /> }
+          { path: ":chatRoomId", element: <ChatList /> }
         ],
       },
       { path: "/pushnotification", element: <PushNotification /> },

@@ -1,59 +1,55 @@
-import React, { useState, useRef } from "react";
-import { FaPlus } from "react-icons/fa6";
+import { DeleteFilled, MoreOutlined } from "@ant-design/icons";
 import {
-  Flex,
-  Input,
-  Table,
-  Popover,
   Button,
-  Modal,
-  Form,
   ConfigProvider,
+  Flex,
+  Form,
+  Input,
   message,
+  Modal,
+  Popover,
+  Spin,
+  Table,
 } from "antd";
-import { MoreOutlined, DeleteFilled, EditFilled } from "@ant-design/icons";
+import { useEffect, useRef, useState } from "react";
+import { FaPlus } from "react-icons/fa6";
 
+import toast from "react-hot-toast";
 import ButtonEDU from "../../../components/common/ButtonEDU";
+import { useCreateAdminMutation, useDeleteAdminMutation, useGetAllAdminQuery } from "../../../features/createAdmin/CreateAdmin";
+
 
 const AdminList = () => {
-  // Initial data
-  const initialData = [
-    {
-      key: 1,
-      name: "Tom Hardy",
-      email: "tom.hardy@gmail.com",
-      role: "Admin",
-      creationdate: "13 Feb 2020",
-    },
-    {
-      key: 2,
-      name: "Emma Stone",
-      email: "emma.stone@example.com",
-      role: "Admin",
-      creationdate: "10 Jan 2021",
-    },
-    {
-      key: 3,
-      name: "Robert Downey",
-      email: "rdj@avengers.com",
-      role: "Admin",
-      creationdate: "25 Dec 2019",
-    },
-  ];
+  // API hooks
+  const { data: adminData, isLoading, refetch } = useGetAllAdminQuery();
+  const [createAdmin, { isLoading: isCreating }] = useCreateAdminMutation();
+  const [deleteAdmin, { isLoading: isDeleting }] = useDeleteAdminMutation();
 
   const [searchText, setSearchText] = useState("");
-  const [admins, setAdmins] = useState(initialData);
-  const [filteredData, setFilteredData] = useState(initialData);
+  const [admins, setAdmins] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const [selectedAdmin, setSelectedAdmin] = useState(null);
 
   const addFormRef = useRef(null);
-  const editFormRef = useRef(null);
-  
+
+  // Update admins when data is fetched
+  useEffect(() => {
+    if (adminData?.data) {
+      const formattedAdmins = adminData.data.map((admin, index) => ({
+        key: admin._id || index + 1,
+        name: admin.name,
+        email: admin.email,
+        creationdate: new Date(admin.createdAt).toLocaleDateString() || "N/A",
+        _id: admin._id,
+      }));
+      setAdmins(formattedAdmins);
+      setFilteredData(formattedAdmins);
+    }
+  }, [adminData]);
 
   // Search functionality
   const handleSearch = (e) => {
@@ -81,56 +77,30 @@ const AdminList = () => {
     message.info("Admin addition cancelled.");
   };
 
-  const handleAddAdmin = (values) => {
-    // Ensure characters after ".com" are removed
-    const cleanEmail = values.email.replace(/\.com.*/i, ".com");
+  const handleAddAdmin = async (values) => {
+    try {
+      // Prepare data for API
+      const adminData = {
+        name: values.name,
+        email: values.email,
+        contactNumber: values.contactNumber || "",
+        password: values.password,
+      };
 
-    const newAdmin = {
-      key: admins.length + 1,
-      ...values,
-      email: cleanEmail, // Apply cleaned email
-      creationdate: new Date().toLocaleDateString(),
-    };
+      // Call API to create admin
+      const response = await createAdmin(adminData).unwrap();
 
-    const updatedAdmins = [...admins, newAdmin];
-    setAdmins(updatedAdmins);
-    setFilteredData(updatedAdmins);
-    setIsAddModalOpen(false);
-    addFormRef.current?.resetFields();
+      // Close modal and reset form first
+      setIsAddModalOpen(false);
+      addFormRef.current?.resetFields();
 
-    message.success("Admin added successfully!");
-  };
+      // Show success message
+      toast.success("Admin added successfully!");
+      refetch();
 
-  // Open Edit Admin Modal
-  const showEditModal = (record) => {
-    setSelectedAdmin(record);
-    setIsEditModalOpen(true);
-    setTimeout(() => {
-      editFormRef.current?.setFieldsValue(record);
-    }, 0);
-  };
-
-  // Close Edit Admin Modal
-  const handleCancelEdit = () => {
-    setIsEditModalOpen(false);
-    editFormRef.current?.resetFields();
-    message.info("Admin edit cancelled.");
-  };
-
-  const handleEditAdmin = (values) => {
-    // Ensure characters after ".com" are removed
-    const cleanEmail = values.email.replace(/\.com.*/i, ".com");
-
-    const updatedAdmins = admins.map((admin) =>
-      admin.key === selectedAdmin.key
-        ? { ...admin, ...values, email: cleanEmail }
-        : admin
-    );
-    setAdmins(updatedAdmins);
-    setFilteredData(updatedAdmins);
-    setIsEditModalOpen(false);
-
-    message.success("Admin updated successfully!");
+    } catch (error) {
+      // toast.error(`Failed to add admin: ${error.data?.message || error.message || "Unknown error"}`);
+    }
   };
 
   // Open Delete Admin Modal
@@ -140,215 +110,140 @@ const AdminList = () => {
   };
 
   // Confirm Delete Admin
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!selectedAdmin) return;
-    const updatedAdmins = admins.filter(
-      (admin) => admin.key !== selectedAdmin.key
-    );
-    setAdmins(updatedAdmins);
-    setFilteredData(updatedAdmins);
-    setIsDeleteModalOpen(false);
 
-    message.success("Admin deleted successfully!");
-  };
+    try {
+      // Call API to delete admin
+      await deleteAdmin(selectedAdmin._id).unwrap();
 
-  const handleMenuClick = (e) => {
-    const selected = items.find((item) => item.key === e.key);
-    if (selected) {
-      setSelectedRecipient(selected.label);
+      // Close modal first
+      setIsDeleteModalOpen(false);
+
+      // Show success message
+      toast.success("Admin deleted successfully!");
+
+      // Wait a brief moment before refetching
+      setTimeout(() => {
+        refetch().catch(error => {
+          console.error("Error refetching admin data:", error);
+          // Don't show this error to the user
+        });
+      }, 500);
+
+    } catch (error) {
+      toast.error(`Failed to delete admin: ${error.data?.message || error.message || "Unknown error"}`);
     }
   };
 
   return (
- 
     <div className="w-[60%] bg-white rounded-lg shadow-lg p-5">
-        <ConfigProvider
-    theme={{
-      token: {
-        colorPrimary: '#F97316',
-      },}}>
-      <TableHead
-        searchText={searchText}
-        handleSearch={handleSearch}
-        onAdd={showAddModal}
-      />
-      <TableBody
-        filteredData={filteredData}
-        onEdit={showEditModal}
-        onDelete={showDeleteModal}
-      />
+      <ConfigProvider
+        theme={{
+          token: {
+            colorPrimary: '#F97316',
+          },
+        }}
+      >
+        <TableHead
+          searchText={searchText}
+          handleSearch={handleSearch}
+          onAdd={showAddModal}
+        />
+
+        {isLoading ? (
+          <div className="flex justify-center items-center p-10">
+            <Spin size="large" />
+          </div>
+        ) : (
+          <TableBody
+            filteredData={filteredData}
+            onDelete={showDeleteModal}
+          />
+        )}
       </ConfigProvider>
 
       <ConfigProvider
-    theme={{
-      token: {
-        colorPrimary: '#F97316',
-      },
-
-      
-    }}
-  >
-
-
- {/* Add Admin Modal */}
- <Modal
-        title="Add Admin"
-        open={isAddModalOpen}
-        onCancel={handleCancelAdd}
-        footer={null}
-        className="z-50"
+        theme={{
+          token: {
+            colorPrimary: '#F97316',
+          },
+        }}
       >
-        <ConfigProvider
-          theme={{
-            components: {
-              Form: {
-                labelFontSize: 16,
-              },
-            },
-          }}
+        {/* Add Admin Modal */}
+        <Modal
+          title="Add Admin"
+          open={isAddModalOpen}
+          onCancel={handleCancelAdd}
+          footer={null}
+          className="z-50"
         >
-          <Form layout="vertical" ref={addFormRef} onFinish={handleAddAdmin}>
-            <Form.Item
-              label="Name"
-              name="name"
-              rules={[{ required: true, message: "Please enter Name" }]}
-            >
-              <Input placeholder="Name" className="h-10" />
-            </Form.Item>
-            <Form.Item
-              label="Email"
-              name="email"
-              rules={[
-                { required: true, message: "Please enter Email" },
-                {
-                  pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                  message: "Please enter a valid email address",
+          <ConfigProvider
+            theme={{
+              components: {
+                Form: {
+                  labelFontSize: 16,
                 },
-                {
-                  validator: (_, value) => {
-                    // Ensure no characters after .com
-                    if (value && value.includes(".com")) {
-                      const emailAfterDot = value.split(".com")[1];
-                      if (emailAfterDot && emailAfterDot.length > 0) {
-                        return Promise.reject(
-                          "No characters should be after .com"
-                        );
-                      }
-                    }
-                    return Promise.resolve();
-                  },
-                },
-              ]}
-            >
-              <Input placeholder="Email" className="h-10" />
-            </Form.Item>
-            <Form.Item
-              label="Role"
-              name="role"
-              value="Admin"
-              rules={[{ required: false, message: "Please enter Role" }]}
-            >
-              <Input placeholder="Role" className="h-10" disabled />
-            </Form.Item>
-            <Form.Item label="Password" name="password">
-              <Input.Password placeholder="Set a Password" className="h-10" />
-            </Form.Item>
-            <div className="flex justify-end gap-4 mt-4">
-              <ButtonEDU actionType="cancel" onClick={handleCancelAdd}>
-                Cancel
-              </ButtonEDU>
-              <ButtonEDU
-                actionType="save"
-                onClick={() => addFormRef.current?.submit()}
-              >
-                Save
-              </ButtonEDU>
-            </div>
-          </Form>
-        </ConfigProvider>
-      </Modal>
-  </ConfigProvider>
-
-      {/* Edit Admin Modal */}
-      <Modal
-        title="Edit Admin"
-        open={isEditModalOpen}
-        onCancel={handleCancelEdit}
-        footer={null}
-        className="z-50"
-      >
-        <ConfigProvider
-          theme={{
-            components: {
-              Form: {
-                labelFontSize: 16,
               },
-            },
-          }}
-        >
-          <Form layout="vertical" ref={editFormRef} onFinish={handleEditAdmin}>
-            <Form.Item
-              label="Name"
-              name="name"
-              rules={[{ required: true, message: "Please enter Name" }]}
-            >
-              <Input placeholder="Name" className="h-10" />
-            </Form.Item>
-            <Form.Item
-              label="Email"
-              name="email"
-              rules={[
-                { required: true, message: "Please enter Email" },
-                {
-                  pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                  message: "Please enter a valid email address",
-                },
-                {
-                  validator: (_, value) => {
-                    // Ensure no characters after .com
-                    if (value && value.includes(".com")) {
-                      const emailAfterDot = value.split(".com")[1];
-                      if (emailAfterDot && emailAfterDot.length > 0) {
-                        return Promise.reject(
-                          "No characters should be after .com"
-                        );
-                      }
-                    }
-                    return Promise.resolve();
-                  },
-                },
-              ]}
-            >
-              <Input placeholder="Email" className="h-10" />
-            </Form.Item>
-            <Form.Item
-              label="Role"
-              name="role"
-              rules={[{ required: true, message: "Please enter Role" }]}
-            >
-              <Input placeholder="Role" className="h-10" />
-            </Form.Item>
-
-            <div className="flex justify-end gap-4 mt-4">
-              <ButtonEDU actionType="cancel" onClick={handleCancelEdit}>
-                Cancel
-              </ButtonEDU>
-              <ButtonEDU
-                actionType="save"
-                onClick={() => editFormRef.current?.submit()}
+            }}
+          >
+            <Form layout="vertical" ref={addFormRef} onFinish={handleAddAdmin}>
+              <Form.Item
+                label="Name"
+                name="name"
+                rules={[{ required: true, message: "Please enter Name" }]}
               >
-                Save
-              </ButtonEDU>
-            </div>
-          </Form>
-        </ConfigProvider>
-      </Modal>
+                <Input placeholder="Name" className="h-10" />
+              </Form.Item>
+              <Form.Item
+                label="Email"
+                name="email"
+                rules={[
+                  { required: true, message: "Please enter Email" },
+                  {
+                    pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                    message: "Please enter a valid email address",
+                  },
+                ]}
+              >
+                <Input placeholder="Email" className="h-10" />
+              </Form.Item>
+              <Form.Item
+                label="Contact Number"
+                name="contactNumber"
+                rules={[{ required: true, message: "Please enter Contact Number" }]}
+              >
+                <Input placeholder="Contact Number" className="h-10" />
+              </Form.Item>
+              <Form.Item
+                label="Password"
+                name="password"
+                rules={[{ required: true, message: "Please enter Password" }]}
+              >
+                <Input.Password placeholder="Set a Password" className="h-10" />
+              </Form.Item>
+              <div className="flex justify-end gap-4 mt-4">
+                <ButtonEDU actionType="cancel" onClick={handleCancelAdd} disabled={isCreating}>
+                  Cancel
+                </ButtonEDU>
+                <ButtonEDU
+                  actionType="save"
+                  onClick={() => addFormRef.current?.submit()}
+                  loading={isCreating}
+                >
+                  {isCreating ? <Spin size="small" /> : 'Save'}
+                </ButtonEDU>
+              </div>
+            </Form>
+          </ConfigProvider>
+        </Modal>
+      </ConfigProvider>
 
       {/* Delete Admin Modal */}
       <Modal
         title="Delete Admin"
         open={isDeleteModalOpen}
-        onCancel={() => setIsDeleteModalOpen(false)}
+        onCancel={() => !isDeleting && setIsDeleteModalOpen(false)}
         footer={null}
         centered
         className="z-50"
@@ -357,12 +252,12 @@ const AdminList = () => {
           name={selectedAdmin?.name}
           onConfirm={handleConfirmDelete}
           onCancel={() => setIsDeleteModalOpen(false)}
+          isDeleting={isDeleting}
         />
       </Modal>
     </div>
   );
 };
-
 
 const TableHead = ({ searchText, handleSearch, onAdd }) => {
   return (
@@ -382,17 +277,18 @@ const TableHead = ({ searchText, handleSearch, onAdd }) => {
     </div>
   );
 };
-const TableBody = ({ filteredData, onEdit, onDelete }) => (
+
+const TableBody = ({ filteredData, onDelete }) => (
   <Table
     rowKey={(record) => record.key}
-    columns={columns(onEdit, onDelete)}
+    columns={columns(onDelete)}
     dataSource={filteredData}
     pagination={false}
     className="mt-5"
   />
 );
 
-const DeleteAdmin = ({ name, onConfirm, onCancel }) => (
+const DeleteAdmin = ({ name, onConfirm, onCancel, isDeleting }) => (
   <Flex
     vertical
     justify="space-between"
@@ -404,29 +300,27 @@ const DeleteAdmin = ({ name, onConfirm, onCancel }) => (
       <span className="ml-1 font-bold">{name}</span>?
     </Flex>
     <div className="flex items-center justify-center gap-4">
-      <ButtonEDU actionType="cancel" onClick={onCancel}>
-        Cancel{" "}
+      <ButtonEDU actionType="cancel" onClick={onCancel} disabled={isDeleting}>
+        Cancel
       </ButtonEDU>
-      <ButtonEDU actionType="delete" onClick={onConfirm}>
-        Delete
+      <ButtonEDU actionType="delete" onClick={onConfirm} loading={isDeleting}>
+        {isDeleting ? <Spin size="small" /> : 'Delete'}
       </ButtonEDU>
     </div>
   </Flex>
 );
 
-const columns = (onEdit, onDelete) => [
+const columns = (onDelete) => [
   { title: "Name", dataIndex: "name", key: "name" },
   { title: "Email", dataIndex: "email", key: "email" },
   { title: "Role", dataIndex: "role", key: "role" },
+  { title: "Creation Date", dataIndex: "creationdate", key: "creationdate" },
   {
     key: "action",
     render: (_, record) => (
       <Popover
         content={
           <div className="flex gap-3">
-            <Button onClick={() => onEdit(record)}>
-              <EditFilled />
-            </Button>
             <Button onClick={() => onDelete(record)} danger>
               <DeleteFilled />
             </Button>

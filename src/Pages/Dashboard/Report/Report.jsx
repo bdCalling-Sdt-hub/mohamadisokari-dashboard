@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Table, ConfigProvider, Button, DatePicker, Input, Tag, Tooltip, Dropdown, Space, Modal, Select } from "antd";
-import { SearchOutlined, FilterOutlined, SortAscendingOutlined, SortDescendingOutlined, DeleteOutlined, EyeOutlined, DownloadOutlined, ReloadOutlined, SettingOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
+import { DeleteOutlined, DownloadOutlined, EyeOutlined, FilterOutlined, LeftOutlined, ReloadOutlined, RightOutlined, SearchOutlined, SortAscendingOutlined, SortDescendingOutlined } from "@ant-design/icons";
+import { Button, ConfigProvider, DatePicker, Dropdown, Input, Modal, Select, Table, Tag, Tooltip } from "antd";
+import { useMemo, useState } from "react";
+import { useDeleteReportMutation, useGetAllReportQuery } from "../../../features/Report/ReportApi";
 import DetailsModal from "./DetailsModal";
 import ReportChart from "./ReportChart";
+
 
 function Report() {
   // Enhanced state management
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [userData, setUserData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [sortState, setSortState] = useState({
@@ -16,7 +17,6 @@ function Report() {
   });
   const [searchText, setSearchText] = useState('');
   const [filterStatus, setFilterStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [tableSettings, setTableSettings] = useState({
@@ -26,15 +26,33 @@ function Report() {
     currentPage: 1
   });
 
-  // Simulating data fetching
-  useEffect(() => {
-    setLoading(true);
-    // Simulating API call delay
-    setTimeout(() => {
-      setUserData(sampleData);
-      setLoading(false);
-    }, 500);
-  }, []);
+  // RTK Query hooks
+  const {
+    data: reportsData = [],
+    isLoading,
+    refetch
+  } = useGetAllReportQuery();
+
+  console.log(reportsData?.data?.reports)
+
+  const [deleteReport, { isLoading: isDeleting }] = useDeleteReportMutation();
+
+  // Format the API data for table use
+  const userData = useMemo(() => {
+    if (!reportsData || !reportsData?.data?.reports) return [];
+
+    return reportsData?.data?.reports.map(report => ({
+      key: report._id || report.id,
+      reportID: report.reportID || `R${report.id}`,
+      serviceProvider: report.serviceProvider,
+      reportedBy: report.reportedBy,
+      status: report.status,
+      date: report.date || report.createdAt,
+      priority: report.priority,
+      description: report.description,
+      ...report // Keep all original properties
+    }));
+  }, [reportsData]);
 
   // Row selection configuration
   const rowSelection = {
@@ -75,10 +93,20 @@ function Report() {
     setIsDeleteModalVisible(true);
   };
 
-  const confirmDelete = () => {
-    setUserData(userData.filter((user) => !selectedRowKeys.includes(user.key)));
-    setSelectedRowKeys([]);
-    setIsDeleteModalVisible(false);
+  const confirmDelete = async () => {
+    try {
+      // Delete each selected report sequentially
+      for (const key of selectedRowKeys) {
+        await deleteReport(key).unwrap();
+      }
+      setSelectedRowKeys([]);
+      setIsDeleteModalVisible(false);
+      // Refresh the data
+      refetch();
+    } catch (error) {
+      console.error("Error deleting reports:", error);
+      // Handle error (you might want to show a notification here)
+    }
   };
 
   const handleViewDetails = (record) => {
@@ -109,36 +137,82 @@ function Report() {
   };
 
   const handleRefresh = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setUserData(sampleData);
-      setLoading(false);
-      setSearchText('');
-      setFilterStatus(null);
-      setSelectedMonth(null);
-      setTableSettings(prev => ({ ...prev, currentPage: 1 }));
-    }, 500);
+    // Clear filters and refresh data
+    setSearchText('');
+    setFilterStatus(null);
+    setSelectedMonth(null);
+    setTableSettings(prev => ({ ...prev, currentPage: 1 }));
+    refetch();
+  };
+
+  // CSV Export functionality
+  const handleExportCSV = () => {
+    if (processedData.length === 0) return;
+
+    // Create CSV header
+    const headers = columns
+      .filter(col => col.key !== 'action') // Exclude action column
+      .map(col => col.dataIndex)
+      .join(',');
+
+    // Create CSV rows
+    const rows = processedData.map(item => {
+      return columns
+        .filter(col => col.key !== 'action') // Exclude action column
+        .map(col => {
+          const value = item[col.dataIndex];
+
+          // Format date
+          if (col.dataIndex === 'date') {
+            return new Date(value).toLocaleDateString();
+          }
+
+          // Handle string values with commas
+          if (typeof value === 'string' && value.includes(',')) {
+            return `"${value}"`;
+          }
+
+          return value;
+        })
+        .join(',');
+    }).join('\n');
+
+    // Combine header and rows
+    const csv = `${headers}\n${rows}`;
+
+    // Create download link
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `reports_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Table data processing with memoization
   const processedData = useMemo(() => {
+    if (!userData || userData.length === 0) return [];
+
     let result = [...userData];
-    
+
     // Apply search filter
     if (searchText) {
       const searchLower = searchText.toLowerCase();
-      result = result.filter(item => 
-        item.reportID.toLowerCase().includes(searchLower) ||
-        item.serviceProvider.toLowerCase().includes(searchLower) ||
-        item.reportedBy.toLowerCase().includes(searchLower)
+      result = result.filter(item =>
+        (item.reportID && item.reportID.toLowerCase().includes(searchLower)) ||
+        (item.serviceProvider && item.serviceProvider.toLowerCase().includes(searchLower)) ||
+        (item.reportedBy && item.reportedBy.toLowerCase().includes(searchLower))
       );
     }
-    
+
     // Apply status filter
     if (filterStatus) {
       result = result.filter(item => item.status === filterStatus);
     }
-    
+
     // Apply month filter
     if (selectedMonth) {
       const month = selectedMonth.month();
@@ -148,27 +222,27 @@ function Report() {
         return date.getMonth() === month && date.getFullYear() === year;
       });
     }
-    
+
     // Apply sorting
     result.sort((a, b) => {
       const aValue = a[sortState.field];
       const bValue = b[sortState.field];
-      
+
       if (sortState.field === 'date') {
         const dateA = new Date(aValue);
         const dateB = new Date(bValue);
         return sortState.order === 'asc' ? dateA - dateB : dateB - dateA;
       }
-      
+
       if (typeof aValue === 'string') {
-        return sortState.order === 'asc' 
+        return sortState.order === 'asc'
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
       }
-      
+
       return sortState.order === 'asc' ? aValue - bValue : bValue - aValue;
     });
-    
+
     return result;
   }, [userData, searchText, filterStatus, selectedMonth, sortState]);
 
@@ -185,11 +259,11 @@ function Report() {
       title: (
         <div className="flex items-center justify-between">
           <span>Report ID</span>
-          <Button 
-            type="text" 
-            size="small" 
-            icon={sortState.field === 'reportID' 
-              ? (sortState.order === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />) 
+          <Button
+            type="text"
+            size="small"
+            icon={sortState.field === 'reportID'
+              ? (sortState.order === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />)
               : <SortAscendingOutlined className="text-gray-400" />}
             onClick={() => handleSort('reportID')}
           />
@@ -203,11 +277,11 @@ function Report() {
       title: (
         <div className="flex items-center justify-between">
           <span>Service Provider</span>
-          <Button 
-            type="text" 
-            size="small" 
-            icon={sortState.field === 'serviceProvider' 
-              ? (sortState.order === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />) 
+          <Button
+            type="text"
+            size="small"
+            icon={sortState.field === 'serviceProvider'
+              ? (sortState.order === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />)
               : <SortAscendingOutlined className="text-gray-400" />}
             onClick={() => handleSort('serviceProvider')}
           />
@@ -257,8 +331,8 @@ function Report() {
             }}
             trigger={['click']}
           >
-            <FilterOutlined 
-              className={`cursor-pointer ${filterStatus ? 'text-blue-500' : 'text-gray-400'}`} 
+            <FilterOutlined
+              className={`cursor-pointer ${filterStatus ? 'text-blue-500' : 'text-gray-400'}`}
             />
           </Dropdown>
         </div>
@@ -271,7 +345,7 @@ function Report() {
         else if (status === 'Under Review') color = 'processing';
         else if (status === 'Pending') color = 'warning';
         else if (status === 'Rejected') color = 'error';
-        
+
         return <Tag color={color}>{status}</Tag>;
       },
     },
@@ -279,11 +353,11 @@ function Report() {
       title: (
         <div className="flex items-center justify-between">
           <span>Date</span>
-          <Button 
-            type="text" 
-            size="small" 
-            icon={sortState.field === 'date' 
-              ? (sortState.order === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />) 
+          <Button
+            type="text"
+            size="small"
+            icon={sortState.field === 'date'
+              ? (sortState.order === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />)
               : <SortAscendingOutlined className="text-gray-400" />}
             onClick={() => handleSort('date')}
           />
@@ -385,20 +459,21 @@ function Report() {
                 {searchText ? ` matching "${searchText}"` : ''}
               </p>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <Tooltip title="Refresh Data">
-                <Button 
-                  icon={<ReloadOutlined />} 
+                <Button
+                  icon={<ReloadOutlined />}
                   onClick={handleRefresh}
-                  loading={loading}
+                  loading={isLoading}
                   className="flex items-center justify-center"
                 />
               </Tooltip>
-              
+
               <Tooltip title="Export to CSV">
-                <Button 
-                  icon={<DownloadOutlined />} 
+                <Button
+                  icon={<DownloadOutlined />}
+                  onClick={handleExportCSV}
                   className="flex items-center justify-center"
                 >
                   Export
@@ -417,16 +492,16 @@ function Report() {
                 onChange={handleSearch}
                 allowClear
               />
-              
-              <DatePicker 
-                picker="month" 
+
+              <DatePicker
+                picker="month"
                 placeholder="Filter by month"
                 className="w-40"
                 onChange={handleMonthChange}
                 value={selectedMonth}
               />
             </div>
-            
+
             <div className="flex gap-3">
               <Button
                 icon={sortState.order === 'asc' ? <SortAscendingOutlined /> : <SortDescendingOutlined />}
@@ -444,6 +519,7 @@ function Report() {
                   onClick={handleDeleteSelected}
                   danger
                   type="primary"
+                  loading={isDeleting}
                   className="flex items-center"
                 >
                   Delete {selectedRowKeys.length} Selected
@@ -456,7 +532,7 @@ function Report() {
             rowSelection={rowSelection}
             columns={columns}
             dataSource={paginatedData}
-            loading={loading}
+            loading={isLoading}
             size={tableSettings.dense ? "small" : "middle"}
             pagination={false}
             rowClassName="hover:bg-gray-50 transition-colors"
@@ -466,9 +542,9 @@ function Report() {
 
           {/* Custom Pagination */}
           <div className="flex items-center justify-end mt-4 pagination-container">
-            <Select 
-              defaultValue="10" 
-              style={{ width: 120 }} 
+            <Select
+              defaultValue="10"
+              style={{ width: 120 }}
               onChange={handlePageSizeChange}
               options={[
                 { value: '10', label: '10 / page' },
@@ -478,20 +554,20 @@ function Report() {
               value={String(tableSettings.pageSize)}
             />
             <span style={{ margin: '0 16px' }}>
-              {processedData.length === 0 
-                ? '0-0 of 0' 
+              {processedData.length === 0
+                ? '0-0 of 0'
                 : `${(tableSettings.currentPage - 1) * tableSettings.pageSize + 1}-${Math.min(tableSettings.currentPage * tableSettings.pageSize, processedData.length)} of ${processedData.length}`}
             </span>
-            <Button 
-              type="text" 
-              icon={<LeftOutlined />} 
-              disabled={tableSettings.currentPage === 1} 
+            <Button
+              type="text"
+              icon={<LeftOutlined />}
+              disabled={tableSettings.currentPage === 1}
               onClick={handlePrevPage}
-              style={{ marginRight: '8px' }} 
+              style={{ marginRight: '8px' }}
             />
-            <Button 
-              type="text" 
-              icon={<RightOutlined />} 
+            <Button
+              type="text"
+              icon={<RightOutlined />}
               disabled={tableSettings.currentPage >= Math.ceil(processedData.length / tableSettings.pageSize)}
               onClick={handleNextPage}
             />
@@ -516,7 +592,7 @@ function Report() {
               <Button key="cancel" onClick={() => setIsDeleteModalVisible(false)}>
                 Cancel
               </Button>,
-              <Button key="delete" danger type="primary" onClick={confirmDelete}>
+              <Button key="delete" danger type="primary" onClick={confirmDelete} loading={isDeleting}>
                 Delete
               </Button>,
             ]}
@@ -531,127 +607,3 @@ function Report() {
 }
 
 export default Report;
-
-// Enhanced data with more fields and expanded status options
-const sampleData = [
-  {
-    key: 1,
-    reportID: "R001",
-    serviceProvider: "Provider 1",
-    reportedBy: "John Smith",
-    status: "Under Review",
-    date: "2024-12-11",
-    priority: "High",
-    description: "Service was interrupted for 2 hours without prior notice"
-  },
-  {
-    key: 2,
-    reportID: "R002",
-    serviceProvider: "Provider 2",
-    reportedBy: "Sarah Johnson",
-    status: "Resolved",
-    date: "2024-06-11",
-    priority: "Medium",
-    description: "Billing discrepancy resolved after verification"
-  },
-  {
-    key: 3,
-    reportID: "R003",
-    serviceProvider: "Provider 3",
-    reportedBy: "Michael Brown",
-    status: "Resolved",
-    date: "2024-12-05",
-    priority: "Low",
-    description: "Minor UI issues in the dashboard"
-  },
-  {
-    key: 4,
-    reportID: "R004",
-    serviceProvider: "Provider 4",
-    reportedBy: "Emma Wilson",
-    status: "Under Review",
-    date: "2024-10-01",
-    priority: "High",
-    description: "Customer data was not properly synced between systems"
-  },
-  {
-    key: 5,
-    reportID: "R005",
-    serviceProvider: "Provider 1",
-    reportedBy: "Robert Garcia",
-    status: "Pending",
-    date: "2024-12-18",
-    priority: "Medium",
-    description: "Service quality degradation during peak hours"
-  },
-  {
-    key: 6,
-    reportID: "R006",
-    serviceProvider: "Provider 5",
-    reportedBy: "Jennifer Lee",
-    status: "Rejected",
-    date: "2024-11-24",
-    priority: "Low",
-    description: "Feature request outside of service agreement scope"
-  },
-  {
-    key: 7,
-    reportID: "R007",
-    serviceProvider: "Provider 2",
-    reportedBy: "David Miller",
-    status: "Resolved",
-    date: "2024-12-03",
-    priority: "High",
-    description: "Critical security vulnerability that was patched"
-  },
-  {
-    key: 8,
-    reportID: "R008",
-    serviceProvider: "Provider 3",
-    reportedBy: "Lisa Taylor",
-    status: "Pending",
-    date: "2024-12-15",
-    priority: "Medium",
-    description: "Integration issue with third-party API"
-  },
-  {
-    key: 9,
-    reportID: "R009",
-    serviceProvider: "Provider 4",
-    reportedBy: "James Wilson",
-    status: "Resolved",
-    date: "2024-11-10",
-    priority: "Low",
-    description: "Minor documentation issue"
-  },
-  {
-    key: 10,
-    reportID: "R010",
-    serviceProvider: "Provider 5",
-    reportedBy: "Emily Davis",
-    status: "Under Review",
-    date: "2024-12-20",
-    priority: "High",
-    description: "System outage affecting multiple users"
-  },
-  {
-    key: 11,
-    reportID: "R011",
-    serviceProvider: "Provider 1",
-    reportedBy: "Daniel Harris",
-    status: "Pending",
-    date: "2024-12-01",
-    priority: "Medium",
-    description: "Performance issues in mobile app"
-  },
-  {
-    key: 12,
-    reportID: "R012",
-    serviceProvider: "Provider 2",
-    reportedBy: "Olivia Martin",
-    status: "Resolved",
-    date: "2024-11-15",
-    priority: "Low",
-    description: "Typo in error message"
-  },
-];

@@ -1,24 +1,38 @@
-import { Checkbox, Form, Input } from "antd";
-import React from "react";
+import { Button, Checkbox, Form, Input } from "antd";
+import { jwtDecode } from "jwt-decode";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useLoginMutation } from "../../features/auth/authApi";
 import { saveToken } from "../../features/auth/authService";
 
+
 const Login = () => {
   const navigate = useNavigate();
-  const [Login] = useLoginMutation();
+  const [Login , {isLoading}] = useLoginMutation();
 
 
 
   const onFinish = async (values) => {
     try {
       const response = await Login(values).unwrap();
+      console.log(response);
       if (response.success) {
         saveToken(response?.data?.accessToken);
         localStorage.setItem("userId", response?.data?.userId);
-        toast.success(response.message);
-        navigate("/");
+
+        // Decode the token to get the role
+        const decodedToken = jwtDecode(response?.data?.accessToken); // Changed here too
+        const role = decodedToken?.role; // Extract role from token
+
+        // Redirect based on role
+        if (role === "SUPER_ADMIN") {
+          navigate("/"); // Redirect SUPER_ADMIN to a specific route
+        } else if (role === "USER") {
+          toast.error("You have no permission to login");
+        } else {
+          toast.success(response.message);
+        }
+
       }
     } catch (error) {
       toast.error(error?.data?.message);
@@ -99,7 +113,8 @@ const Login = () => {
         </div>
 
         <Form.Item style={{ marginBottom: 0 }}>
-          <button
+          <Button
+            loading={isLoading}
             htmlType="submit"
             type="submit"
             style={{
@@ -113,7 +128,7 @@ const Login = () => {
             className="flex items-center justify-center text-base rounded-lg bg-smart hover:bg-smart/90"
           >
             Sign in
-          </button>
+          </Button>
         </Form.Item>
       </Form>
 

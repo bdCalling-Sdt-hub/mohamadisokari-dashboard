@@ -1,14 +1,20 @@
-import React, { useState } from 'react';
-import { Table, Typography, Button, Pagination } from 'antd';
 import { SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
+import { Button, Pagination, Table, Typography } from 'antd';
+import { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useGetSellerHistoryQuery } from '../../features/userManagement/UserManagementApi';
 
 const { Title } = Typography;
 
 const SalesHistory = () => {
+  const { id } = useParams();
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10; // Fixed page size
   const [sortOrder, setSortOrder] = useState('ascend'); // 'ascend' or 'descend'
-  
+
+  const { data } = useGetSellerHistoryQuery(id);
+  console.log(data);
+
   // Mock data for sales
   const generateSalesData = () => {
     return Array.from({ length: 100 }, (_, index) => ({
@@ -20,9 +26,9 @@ const SalesHistory = () => {
       buyer: ['Hassan Mahmud', 'Amina Ali', 'Ibrahim Omar', 'Fatima Yusuf', 'Ahmed Mohamed'][Math.floor(Math.random() * 5)]
     }));
   };
-  
+
   const rawSalesData = generateSalesData();
-  
+
   // Sort the data based on current sort order (using date as default field)
   const salesData = [...rawSalesData].sort((a, b) => {
     if (sortOrder === 'ascend') {
@@ -31,24 +37,24 @@ const SalesHistory = () => {
       return b.date.localeCompare(a.date);
     }
   });
-  
+
   // Calculate pagination
   const totalItems = salesData.length;
   const paginatedData = salesData.slice(
-    (currentPage - 1) * pageSize, 
+    (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
-  
+
   // Function to toggle sort order
   const toggleSort = () => {
     setSortOrder(sortOrder === 'ascend' ? 'descend' : 'ascend');
   };
-  
+
   // Function to handle page change
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
-  
+
   const columns = [
     {
       title: 'Product Name',
@@ -76,27 +82,27 @@ const SalesHistory = () => {
       key: 'buyer',
     },
   ];
-  
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <Title level={3}>Sales History</Title>
-        <Button 
+        <Button
           onClick={toggleSort}
-          icon={sortOrder === 'ascend' ? <SortAscendingOutlined /> : <SortDescendingOutlined />} 
+          icon={sortOrder === 'ascend' ? <SortAscendingOutlined /> : <SortDescendingOutlined />}
           className="bg-white"
         >
           Sort {sortOrder === 'ascend' ? 'Ascending' : 'Descending'}
         </Button>
       </div>
-      
-      <Table 
-        dataSource={paginatedData} 
-        columns={columns} 
+
+      <Table
+        dataSource={paginatedData}
+        columns={columns}
         rowSelection={{ type: 'checkbox' }}
         pagination={false} // Disable built-in pagination to use custom pagination
       />
-      
+
       <div className="flex justify-end mt-4">
         <Pagination
           current={currentPage}

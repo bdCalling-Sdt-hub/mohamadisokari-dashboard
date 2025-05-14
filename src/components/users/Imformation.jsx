@@ -1,56 +1,53 @@
-import React from 'react';
+import { Spin } from 'antd';
 import { FiMail, FiMapPin, FiPhone, FiUser } from 'react-icons/fi';
+import { useParams } from 'react-router-dom';
+import { useGetPerticularUserQuery } from '../../features/userManagement/UserManagementApi';
 
-
-const user = {
-    name: 'Amina Ali',
-    email: 'amina.ali@example.so',
-    phone: '+252 61 2345678',
-    address: 'Mogadishu, Banaadir (Somalia)',
-    memberSince: 'March 2025',
-    profileImage: '/profile-image.jpg' // You would replace this with your actual image path
-  };
 
 const Imformation = () => {
+  const { id } = useParams();
+  const { data, isLoading } = useGetPerticularUserQuery(id);
 
-    return (
-        <div className="flex-1 p-6 bg-white rounded-lg shadow-sm">
-        <div className="space-y-6">
-          <div className="p-6 border rounded shadow">
-            <div className="flex items-center mb-1">
-              <FiUser className="w-5 h-5 mr-2 text-orange-500" />
-              <span className="text-sm text-gray-500">Name</span>
-            </div>
-            <p className="text-gray-800 ml-7">{user.name}</p>
+  if (isLoading) return <div className='flex justify-center items-center h-[200px]'><Spin /></div>
+
+  return (
+    <div className="flex-1 p-6 bg-white rounded-lg shadow-sm">
+      <div className="space-y-6">
+        <div className="p-6 border rounded shadow">
+          <div className="flex items-center mb-1">
+            <FiUser className="w-5 h-5 mr-2 text-orange-500" />
+            <span className="text-sm text-gray-500">Name</span>
           </div>
-          
-          <div className="p-6 border rounded shadow ">
-            <div className="flex items-center mb-1">
-              <FiMail className="w-5 h-5 mr-2 text-orange-500" />
-              <span className="text-sm text-gray-500">Email</span>
-            </div>
-            <p className="text-gray-800 ml-7">{user.email}</p>
+          <p className="text-gray-800 ml-7">{data?.data?.name}</p>
+        </div>
+
+        <div className="p-6 border rounded shadow ">
+          <div className="flex items-center mb-1">
+            <FiMail className="w-5 h-5 mr-2 text-orange-500" />
+            <span className="text-sm text-gray-500">Email</span>
           </div>
-          
-          <div className="p-6 border rounded shadow">
-            <div className="flex items-center mb-1">
-              <FiPhone className="w-5 h-5 mr-2 text-orange-500" />
-              <span className="text-sm text-gray-500">Phone</span>
-            </div>
-            <p className="text-gray-800 ml-7">{user.phone}</p>
+          <p className="text-gray-800 ml-7">{data?.data?.email}</p>
+        </div>
+
+        <div className="p-6 border rounded shadow">
+          <div className="flex items-center mb-1">
+            <FiPhone className="w-5 h-5 mr-2 text-orange-500" />
+            <span className="text-sm text-gray-500">Phone</span>
           </div>
-          
-          <div className='p-6 border rounded shadow'>
-            <div className="flex items-center mb-1">
-              <FiMapPin className="w-5 h-5 mr-2 text-orange-500" />
-              <span className="text-sm text-gray-500">Address</span>
-            </div>
-            <p className="text-gray-800 ml-7">{user.address}</p>
+          <p className="text-gray-800 ml-7">{data?.data?.contactNumber}</p>
+        </div>
+
+        <div className='p-6 border rounded shadow'>
+          <div className="flex items-center mb-1">
+            <FiMapPin className="w-5 h-5 mr-2 text-orange-500" />
+            <span className="text-sm text-gray-500">Address</span>
           </div>
+          <p className="text-gray-800 ml-7">{data?.data?.location}</p>
         </div>
       </div>
-    
-    );
+    </div>
+
+  );
 };
 
 export default Imformation;

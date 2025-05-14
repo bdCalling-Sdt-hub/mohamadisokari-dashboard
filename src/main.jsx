@@ -1,23 +1,25 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import ReactDOM from "react-dom/client";
 
-import App from "./App.jsx";
 
 
-import "./index.css";
+import { Spin } from "antd";
 import { Toaster } from 'react-hot-toast';
-import { store } from "./utils/store.js";
 import { Provider } from "react-redux";
+import "./index.css";
+import { store } from "./utils/store.js";
 
-
+const App = lazy(() => import('./App.jsx'))
 
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-     <Provider store={store}>
-      <App />
+    <Provider store={store}>
+      <Suspense fallback={<div className="flex justify-center items-center h-[400px]"><Spin size="default" /></div>}>
+        <App />
+      </Suspense>
       <Toaster />
-      </Provider>
+    </Provider>
 
   </React.StrictMode>
 );

@@ -2,9 +2,12 @@ import React from "react";
 import { Form, Input, Card, Flex, ConfigProvider, message } from "antd";
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
 import ButtonEDU from "../../../components/common/ButtonEDU";
+import { useChangePasswordMutation } from "../../../features/createAdmin/CreateAdmin";
+import toast from "react-hot-toast";
 
 function AdminPassword() {
   const [form] = Form.useForm(); // Form instance
+  const [changePassword, { isLoading }] = useChangePasswordMutation();
 
   // Handle cancel: Reset form fields
   const handleCancel = () => {
@@ -22,14 +25,22 @@ function AdminPassword() {
         confirmPassword: values.confirmPassword.trim(),
       };
 
-      console.log("Password Updated:", trimmedValues);
-
-      // Replace this with an API call to update the password
-      message.success("Password updated successfully!");
-
-      form.resetFields(); // Clear form after successful update
+      // Connect to API to update the password
+      const result = await changePassword(trimmedValues).unwrap();
+      
+      // Show success message and reset form
+      toast.success("Password updated successfully!");
+      form.resetFields();
     } catch (error) {
-      console.error("Validation failed:", error);
+      // Handle API errors
+      if (error.status === 401) {
+        toast.error("Current password is incorrect");
+      } else if (error.data?.message) {
+        toast.error(error.data.message);
+      } else {
+        toast.error("Failed to update password. Please try again later.");
+      }
+      console.error("Password update failed:", error);
     }
   };
 
@@ -51,7 +62,6 @@ function AdminPassword() {
       <Card
         title="Change Password"
         bordered={false}
-        // style={{ width: 850, height: 500 }}
         className="w-2/5 h-full flex flex-col text-white shadow-[0px_10px_100px_3px_rgba(0,_0,_0,_0.1)]"
       >
         <ConfigProvider
@@ -143,10 +153,10 @@ function AdminPassword() {
 
             {/* Buttons: Cancel & Save */}
             <Flex justify="flex-end" className="w-[80%] gap-4">
-              <ButtonEDU actionType="cancel" onClick={handleCancel}>
+              <ButtonEDU actionType="cancel" onClick={handleCancel} disabled={isLoading}>
                 Cancel
               </ButtonEDU>
-              <ButtonEDU actionType="save" onClick={handleSave}>
+              <ButtonEDU actionType="save" onClick={handleSave} loading={isLoading}>
                 Save
               </ButtonEDU>
             </Flex>

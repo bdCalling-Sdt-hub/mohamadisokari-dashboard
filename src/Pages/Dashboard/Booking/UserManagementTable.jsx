@@ -1,158 +1,133 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Table, 
-  Input, 
-  Button, 
-  Space, 
-  Dropdown, 
-  Menu, 
-  Badge, 
-  Avatar,
-  Typography,
-  Card,
-  Row,
-  Col,
-  message,
-  Modal,
-  Form,
-  Select,
-  DatePicker,
-  ConfigProvider
-} from 'antd';
-import { 
-  SearchOutlined, 
-  MoreOutlined, 
-  ExportOutlined, 
-  FilterOutlined, 
-  SortAscendingOutlined,
-  SortDescendingOutlined,
-  DownloadOutlined,
-  DeleteOutlined,
+import * as XLSX from 'xlsx';
+import {
+  ExportOutlined,
+  FilterOutlined,
   LeftOutlined,
-  RightOutlined
+  MoreOutlined,
+  RightOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
-import './UserManagement.css'; // For additional styling
+import {
+  Avatar,
+  Button,
+  Card,
+  Checkbox,
+  ConfigProvider,
+  Dropdown,
+  Input,
+  Menu,
+  message,
+  Space,
+  Table,
+  Typography
+} from 'antd';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useGetAllUserQuery, useUpdateUserStatusMutation } from '../../../features/userManagement/UserManagementApi';
+import './UserManagement.css';
+import toast from 'react-hot-toast';
 
 const { Text } = Typography;
-const { Option } = Select;
-const { RangePicker } = DatePicker;
 
 const UserManagementTable = () => {
   const router = useNavigate();
-  // Sample data
-  const initialData = [
-    {
-      key: '1',
-      name: 'Angelique Morse',
-      email: 'benny18@yahoo.com',
-      phone: '+46 8 123 456',
-      address: 'Al Faisaliah Tower, King Fahd Road, Olaya District, Riyadh 11491',
-      status: 'Active',
-      createdAt: '2023-01-15',
-    },
-    // ... rest of the initial data
-  ];
-
-  // Generate more mock data for pagination demo
-  const generateMoreData = () => {
-    const additionalData = [];
-    for (let i = 11; i <= 100; i++) {
-      additionalData.push({
-        key: i.toString(),
-        name: `User ${i}`,
-        email: `user${i}@example.com`,
-        phone: '+46 8 123 456',
-        address: 'Al Faisaliah Tower, King Fahd Road, Olaya District, Riyadh 11491',
-        status: i % 3 === 0 ? 'Banned' : 'Active',
-        createdAt: `2023-${Math.floor(Math.random() * 12) + 1}-${Math.floor(Math.random() * 28) + 1}`,
-      });
-    }
-    return [...initialData, ...additionalData];
-  };
-
-  const allData = generateMoreData();
-
-  // State
-  const [data, setData] = useState(allData);
-  const [filteredData, setFilteredData] = useState(allData);
+  
+  // State for pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  
+  // API fetch with current page
+  const { data: userData, isLoading, refetch } = useGetAllUserQuery(currentPage);
+  const [updateStatus, { isLoading: updatingStatusLoading }] = useUpdateUserStatusMutation();
+  
+  // Extract data and pagination info from API response
+  const users = userData?.data || [];
+  const pagination = userData?.pagination || { total: 0, totalPage: 0, page: 1, limit: 10 };
+  
+  // State for filters and sorting
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [searchText, setSearchText] = useState('');
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState(null);
   const [sortField, setSortField] = useState('name');
   const [sortOrder, setSortOrder] = useState('ascend');
-  const [isExportModalVisible, setIsExportModalVisible] = useState(false);
-  const [dateRange, setDateRange] = useState(null);
-  const [isBulkActionModalVisible, setIsBulkActionModalVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
   
-  const [form] = Form.useForm();
-
-  // Effect to handle pagination
+  // Reset selected rows when users data changes
   useEffect(() => {
-    const paginatedData = applyPagination(filteredData);
-    setData(paginatedData);
-  }, [currentPage, pageSize, filteredData]);
+    setSelectedRowKeys([]);
+  }, [users]);
 
-  // Apply filters and sorting
-  useEffect(() => {
-    let result = [...allData];
-    
+  // Handle client-side filtering when search, status filter changes
+  const getFilteredData = () => {
+    let result = [...users];
+
     // Apply search filter
     if (searchText) {
-      result = result.filter(item => 
-        item.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.email.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.address.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.phone.includes(searchText)
+      result = result.filter(item =>
+        item.name?.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.email?.toLowerCase().includes(searchText.toLowerCase()) ||
+        item.location?.toLowerCase().includes(searchText.toLowerCase()) ||
+        (item.contactNumber && item.contactNumber.includes(searchText))
       );
     }
-    
+
     // Apply status filter
     if (statusFilter) {
       result = result.filter(item => item.status === statusFilter);
     }
-    
-    // Apply date range filter
-    if (dateRange) {
-      const [start, end] = dateRange;
-      result = result.filter(item => {
-        const itemDate = new Date(item.createdAt);
-        return itemDate >= start && itemDate <= end;
-      });
-    }
-    
+
     // Apply sorting
     if (sortField && sortOrder) {
       result = result.sort((a, b) => {
+        if (a[sortField] === undefined || b[sortField] === undefined) return 0;
+        
         if (sortOrder === 'ascend') {
-          return a[sortField].localeCompare(b[sortField]);
+          return a[sortField]?.toString().localeCompare(b[sortField]?.toString());
         } else {
-          return b[sortField].localeCompare(a[sortField]);
+          return b[sortField]?.toString().localeCompare(a[sortField]?.toString());
         }
       });
     }
-    
-    setFilteredData(result);
-    setCurrentPage(1); // Reset to first page when filters change
-  }, [searchText, statusFilter, dateRange, sortField, sortOrder]);
 
-  // Pagination logic
-  const applyPagination = (data) => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return data.slice(startIndex, endIndex);
+    return result;
+  };
+
+  // Export handler
+  const handleExport = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning('Please select at least one user to export');
+      return;
+    }
+
+    // Get selected users data
+    const selectedUsers = users.filter(user => selectedRowKeys.includes(user._id));
+    
+    // Prepare data for Excel
+    const exportData = selectedUsers.map(user => ({
+      Name: user.name,
+      Email: user.email,
+      'Phone Number': user.contactNumber ? `+${user.contactNumber}` : '',
+      Address: user.location || '',
+      Status: user.status === 'active' ? 'Active' : 'Banned'
+    }));
+
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Users");
+    
+    // Generate file and download
+    XLSX.writeFile(wb, `users_export_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   // Name click handler
   const handleNameClick = (record, e) => {
     e.stopPropagation();
-    router(`/user-management/user-details/${record?.key}`)
+    router(`/user-management/user-details/${record._id}`);
   };
 
-  // Search handler
+  // Search handler 
   const handleSearch = (value) => {
     setSearchText(value);
   };
@@ -168,17 +143,6 @@ const UserManagementTable = () => {
     setSortOrder(order);
   };
 
-  // Toggle sort order
-  const toggleSortOrder = () => {
-    setSortOrder(sortOrder === 'ascend' ? 'descend' : 'ascend');
-  };
-
-  // Page size change handler
-  const handlePageSizeChange = (value) => {
-    setPageSize(Number(value));
-    setCurrentPage(1);
-  };
-
   // Previous page handler
   const handlePrevPage = () => {
     if (currentPage > 1) {
@@ -188,28 +152,21 @@ const UserManagementTable = () => {
 
   // Next page handler
   const handleNextPage = () => {
-    if (currentPage < Math.ceil(filteredData.length / pageSize)) {
+    if (currentPage < pagination.totalPage) {
       setCurrentPage(currentPage + 1);
     }
   };
 
-  // Bulk actions handler
-  const handleBulkAction = (action) => {
-    setLoading(true);
-    
-    setTimeout(() => {
-      if (action === 'delete') {
-        message.success(`${selectedRowKeys.length} users deleted successfully`);
-      } else if (action === 'activate') {
-        message.success(`${selectedRowKeys.length} users activated successfully`);
-      } else if (action === 'ban') {
-        message.success(`${selectedRowKeys.length} users banned successfully`);
-      }
-      
-      setSelectedRowKeys([]);
-      setLoading(false);
-      setIsBulkActionModalVisible(false);
-    }, 1500);
+  // Handle status change for a single user
+  const handleStatusChange = async (userId, newStatus) => {
+    try {
+     const response =  await updateStatus({ id: userId, status: newStatus }).unwrap();
+     console.log(response)
+      toast.success(`User status changed to ${newStatus}`);
+      refetch(); // Refresh data after status change
+    } catch (error) {
+      toast.error('Failed to update user status');
+    }
   };
 
   // Row selection configuration
@@ -218,97 +175,63 @@ const UserManagementTable = () => {
     onChange: (selectedKeys) => {
       setSelectedRowKeys(selectedKeys);
     },
+    columnWidth: 40,
   };
 
   // Action menu for each row
   const actionMenu = (record) => (
     <Menu>
-      <Menu.Item 
-        key="2" 
-        danger
+      <Menu.Item
+        key="status-change"
         onClick={() => {
-          Modal.confirm({
-            title: 'Are you sure you want to delete this user?',
-            content: 'This action cannot be undone.',
-            okText: 'Yes, Delete',
-            okType: 'danger',
-            cancelText: 'Cancel',
-            onOk() {
-              message.success(`User ${record.name} deleted successfully`);
-            },
-          });
+          const newStatus = record.status === 'active' ? 'banned' : 'active';
+          handleStatusChange(record._id, newStatus);
         }}
       >
-        Delete
-      </Menu.Item>
-      <Menu.Item 
-        key="3"
-        onClick={() => {
-          const newStatus = record.status === 'Active' ? 'Banned' : 'Active';
-          message.success(`User status changed to ${newStatus}`);
-        }}
-      >
-        {record.status === 'Active' ? 'Ban User' : 'Activate User'}
+        {record.status === 'active' ? 'Ban User' : 'Activate User'}
       </Menu.Item>
     </Menu>
   );
 
-  // Status filter menu
-  const statusMenu = (
-    <Menu onClick={({key}) => handleStatusFilter(key)}>
-      <Menu.Item key="all">All</Menu.Item>
-      <Menu.Item key="Active">Active</Menu.Item>
-      <Menu.Item key="Banned">Banned</Menu.Item>
-    </Menu>
-  );
-
-  // Sort menu
-  const sortMenu = (
+  // Sort and filter menu
+  const sortFilterMenu = (
     <Menu>
-      <Menu.Item 
-        key="name" 
+      <Menu.Item
+        key="name-asc"
         onClick={() => handleSort('name', 'ascend')}
-        icon={<SortAscendingOutlined />}
       >
         Sort by Name (A-Z)
       </Menu.Item>
-      <Menu.Item 
-        key="name-desc" 
+      <Menu.Item
+        key="name-desc"
         onClick={() => handleSort('name', 'descend')}
-        icon={<SortDescendingOutlined />}
       >
         Sort by Name (Z-A)
       </Menu.Item>
-      <Menu.Item 
-        key="status" 
-        onClick={() => handleSort('status', 'ascend')}
-        icon={<SortAscendingOutlined />}
-      >
-        Sort by Status
-      </Menu.Item>
-      <Menu.Item 
-        key="date" 
+      <Menu.Item
+        key="date-asc"
         onClick={() => handleSort('createdAt', 'ascend')}
-        icon={<SortAscendingOutlined />}
-      >
-        Sort by Newest
-      </Menu.Item>
-      <Menu.Item 
-        key="date-desc" 
-        onClick={() => handleSort('createdAt', 'descend')}
-        icon={<SortDescendingOutlined />}
       >
         Sort by Oldest
       </Menu.Item>
-    </Menu>
-  );
-
-  // Bulk action menu
-  const bulkActionMenu = (
-    <Menu onClick={() => setIsBulkActionModalVisible(true)}>
-      <Menu.Item key="active">Activate Selected</Menu.Item>
-      <Menu.Item key="ban">Ban Selected</Menu.Item>
-      <Menu.Item key="delete" danger>Delete Selected</Menu.Item>
+      <Menu.Item
+        key="date-desc"
+        onClick={() => handleSort('createdAt', 'descend')}
+      >
+        Sort by Newest
+      </Menu.Item>
+      <Menu.Divider />
+      <Menu.ItemGroup title="Filter by Status">
+        <Menu.Item key="all" onClick={() => handleStatusFilter('all')}>
+          All
+        </Menu.Item>
+        <Menu.Item key="active" onClick={() => handleStatusFilter('active')}>
+          Active
+        </Menu.Item>
+        <Menu.Item key="banned" onClick={() => handleStatusFilter('banned')}>
+          Banned
+        </Menu.Item>
+      </Menu.ItemGroup>
     </Menu>
   );
 
@@ -319,14 +242,15 @@ const UserManagementTable = () => {
       dataIndex: 'name',
       key: 'name',
       sorter: true,
+      sortOrder: sortField === 'name' ? sortOrder : null,
       render: (text, record) => (
-        <div 
-          style={{ display: 'flex', alignItems: 'center', cursor:"pointer" }}
+        <div
+          style={{ display: 'flex', alignItems: 'center', cursor: "pointer" }}
           onClick={(e) => handleNameClick(record, e)}
         >
-          <Avatar src={`https://randomuser.me/api/portraits/women/${parseInt(record.key) % 70 + 1}.jpg`} />
+          <Avatar src={record.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(text)}&background=random`} size={40} />
           <div style={{ marginLeft: 12 }}>
-            <div>{text}</div>
+            <div style={{ fontWeight: 500 }}>{text}</div>
             <div style={{ fontSize: '12px', color: '#888' }}>{record.email}</div>
           </div>
         </div>
@@ -334,37 +258,53 @@ const UserManagementTable = () => {
     },
     {
       title: 'Phone number',
-      dataIndex: 'phone',
+      dataIndex: 'contactNumber',
       key: 'phone',
+      align: 'left',
+      render: (phone) => (
+        <span>+{phone || '48 8 123 456'}</span>
+      ),
     },
     {
       title: 'Address',
-      dataIndex: 'address',
-      key: 'address',
+      dataIndex: 'location',
+      key: 'location',
       ellipsis: true,
+      render: (location) => (
+        <div>
+          {location || 'Al Faisaliah Tower, King Fahd Road, Olaya District, Riyadh 11461'}
+        </div>
+      ),
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
+      align: 'center',
       filters: [
-        { text: 'Active', value: 'Active' },
-        { text: 'Banned', value: 'Banned' },
+        { text: 'Active', value: 'active' },
+        { text: 'Banned', value: 'banned' },
       ],
+      onFilter: (value, record) => record.status === value,
       render: (status) => (
-        <Badge 
-          status={status === 'Active' ? 'success' : 'error'} 
-          text={status} 
+        <div 
           style={{ 
-            color: status === 'Active' ? '#52c41a' : '#f5222d',
-            fontWeight: 'medium'
-          }} 
-        />
+            color: status === 'active' ? '#22c55e' : '#ef4444', 
+            fontWeight: 500,
+            backgroundColor: status === 'banned' ? '#fff5f5' : '#f0fdf4',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            display: 'inline-block'
+          }}
+        >
+          {status === 'active' ? 'Active' : 'Banned'}
+        </div>
       ),
     },
     {
       title: '',
       key: 'action',
+      width: 50,
       render: (_, record) => (
         <Dropdown overlay={() => actionMenu(record)} trigger={['click']}>
           <Button type="text" icon={<MoreOutlined />} />
@@ -373,110 +313,126 @@ const UserManagementTable = () => {
     },
   ];
 
+  // Get filtered and sorted data
+  const filteredData = getFilteredData();
+
   return (
     <ConfigProvider
       theme={{
         token: {
-          colorPrimary: '#F97316',
+          colorPrimary: '#FF6600',
+          colorBgContainer: '#ffffff',
+          borderRadius: 6,
         },
+        components: {
+          Table: {
+            headerBg: '#f9fafb',
+            headerColor: '#374151',
+            rowHoverBg: '#f3f4f6',
+          },
+          Checkbox: {
+            colorPrimary: '#22c55e',
+          },
+          Button: {
+            colorPrimary: '#22c55e',
+          }
+        }
       }}
     >
-      <Card bodyStyle={{ padding: '0px' }}>
-        <div style={{ padding: '16px 24px', borderBottom: '1px solid #f0f0f0' }}>
-          <Row justify="space-between" align="middle">
-            <Col>
-              <Text strong style={{ fontSize: '18px' }}>User Management</Text>
-            </Col>
-            <Col>
-              <Space size="middle">
-                <Input 
-                  placeholder="Search..." 
-                  prefix={<SearchOutlined />} 
-                  onChange={(e) => handleSearch(e.target.value)}
-                  value={searchText}
-                  style={{ width: 200 }}
-                  allowClear
-                />
-                <Dropdown overlay={statusMenu}>
-                  <Button icon={<FilterOutlined />}>
-                    {statusFilter ? `Status: ${statusFilter}` : 'Filter'}
-                  </Button>
-                </Dropdown>
-                <Dropdown overlay={sortMenu}>
-                  <Button 
-                    icon={sortOrder === 'ascend' ? <SortAscendingOutlined /> : <SortDescendingOutlined />}
-                    onClick={toggleSortOrder}
-                  >
-                    Sort
-                  </Button>
-                </Dropdown>
-                <Button 
-                  type="primary" 
-                  icon={<ExportOutlined />}
-                  onClick={() => setIsExportModalVisible(true)}
-                >
-                  Export
-                </Button>
-                {selectedRowKeys.length > 0 && (
-                  <Dropdown overlay={bulkActionMenu}>
-                    <Button type="primary">
-                      Actions ({selectedRowKeys.length})
-                    </Button>
-                  </Dropdown>
-                )}
-              </Space>
-            </Col>
-          </Row>
+      <Card bodyStyle={{ padding: '0px' }} bordered={false}>
+        <div style={{ 
+          padding: '20px 24px', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          borderBottom: '1px solid #f0f0f0'
+        }}>
+          <Text strong style={{ fontSize: '18px' }}>User Management</Text>
+          <Space size="middle">
+            <Input
+              placeholder="Search..."
+              prefix={<SearchOutlined style={{ color: '#9ca3af' }} />}
+              onChange={(e) => handleSearch(e.target.value)}
+              value={searchText}
+              style={{ width: 240, borderRadius: 6 }}
+              allowClear
+            />
+            <Dropdown overlay={sortFilterMenu} placement="bottomRight">
+              <Button 
+                icon={<FilterOutlined />}
+                style={{ borderRadius: 6 }}
+              >
+                Filter
+              </Button>
+            </Dropdown>
+            <Button
+              icon={<ExportOutlined />}
+              style={{ borderRadius: 6 }}
+              onClick={handleExport}
+            >
+              Export
+            </Button>
+          </Space>
         </div>
 
-        <Table 
+        <Table
           rowSelection={rowSelection}
-          columns={columns} 
-          dataSource={data}
-          loading={loading}
+          columns={columns}
+          dataSource={filteredData}
+          loading={isLoading || updatingStatusLoading}
           pagination={false}
-          onChange={(pagination, filters, sorter) => {
-            if (sorter && sorter.field) {
-              setSortField(sorter.field);
-              setSortOrder(sorter.order || 'ascend');
-            }
-            
-            if (filters && filters.status) {
-              setStatusFilter(filters.status[0]);
-            }
-          }}
+          rowKey="_id"
           size="middle"
           scroll={{ x: 'max-content' }}
+          onChange={(pagination, filters, sorter) => {
+            if (sorter.field) {
+              handleSort(sorter.field, sorter.order);
+            }
+          }}
         />
 
-        <div style={{ padding: '16px 24px', display: 'flex', justifyContent: 'end', alignItems: 'center' }}>
-          <div className="pagination-container" style={{ display: 'flex', alignItems: 'center' }}>
-            <Select 
-              defaultValue="10" 
-              style={{ width: 120 }} 
-              onChange={handlePageSizeChange}
-              options={[
-                { value: '10', label: '10 / page' },
-                { value: '20', label: '20 / page' },
-                { value: '50', label: '50 / page' },
-              ]}
-            />
-            <span style={{ margin: '0 16px' }}>
-              {filteredData.length === 0 
-                ? '0-0 of 0' 
-                : `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, filteredData.length)} of ${filteredData.length}`}
+        <div style={{ 
+          padding: '16px 24px', 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          alignItems: 'center',
+          borderTop: '1px solid #f0f0f0'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span style={{ marginRight: '16px' }}>
+              Rows per page: 
+              <span style={{ fontWeight: 500, margin: '0 4px' }}>
+                {pageSize}
+              </span>
+              <Dropdown
+                overlay={
+                  <Menu onClick={e => setPageSize(Number(e.key))}>
+                    <Menu.Item key="10">10</Menu.Item>
+                    <Menu.Item key="20">20</Menu.Item>
+                    <Menu.Item key="50">50</Menu.Item>
+                  </Menu>
+                }
+                trigger={['click']}
+              >
+                <span style={{ cursor: 'pointer' }}>▼</span>
+              </Dropdown>
             </span>
-            <Button 
-              type="text" 
-              icon={<LeftOutlined />} 
-              disabled={currentPage === 1} 
+            <span style={{ marginRight: '16px' }}>
+              {pagination.total === 0
+                ? '0-0 of 0'
+                : `${(currentPage - 1) * pagination.limit + 1}-${Math.min(currentPage * pagination.limit, pagination.total)} of ${pagination.total}`}
+            </span>
+            <Button
+              type="text"
+              icon={<LeftOutlined />}
+              disabled={currentPage === 1}
               onClick={handlePrevPage}
-              style={{ marginRight: '8px' }} 
+              style={{ marginRight: '8px' }}
             />
-            <Button 
-              type="text" 
-              icon={<RightOutlined />} 
-              disabled={currentPage >= Math.ceil(filteredData.length / pageSize)}
+            <Button
+              type="text"
+              icon={<RightOutlined />}
+              disabled={currentPage >= pagination.totalPage}
               onClick={handleNextPage}
             />
           </div>

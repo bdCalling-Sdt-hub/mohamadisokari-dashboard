@@ -1,72 +1,144 @@
-import React, { useState } from 'react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import { Select, Spin } from 'antd';
+import { useEffect, useState } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  LabelList,
   Legend,
-  LabelList, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
 } from 'recharts';
-import { Select } from 'antd';
+import { useUserAnalysisQuery } from '../../../features/userManagement/UserManagementApi';
 
 const UserAnalysis = () => {
-  // Sample data with district and year information
-  const data = [
-    { name: 'Jan', district: 'North', users: 150, year: 2025 },
-    { name: 'Feb', district: 'North', users: 80, year: 2025 },
-    { name: 'Mar', district: 'South', users: 250, year: 2025 },
-    { name: 'Apr', district: 'South', users: 270, year: 2024 },
-    { name: 'May', district: 'East', users: 320, year: 2024 },
-    { name: 'Jun', district: 'East', users: 380, year: 2024 },
-    { name: 'Jul', district: 'West', users: 270, year: 2023 },
-    { name: 'Aug', district: 'West', users: 350, year: 2023 },
-    { name: 'Sep', district: 'North', users: 200, year: 2022 },
-    { name: 'Oct', district: 'South', users: 250, year: 2022 },
-    { name: 'Nov', district: 'East', users: 270, year: 2021 },
-    { name: 'Dec', district: 'West', users: 270, year: 2020 }
+  // District options
+  const districtOptions = [
+    // Banaadir (Mogadishu)
+    { value: 'Abdiaziz', label: 'Abdiaziz' },
+    { value: 'Bondhere', label: 'Bondhere' },
+    { value: 'Daynile', label: 'Daynile' },
+    { value: 'Dharkenley', label: 'Dharkenley' },
+    { value: 'Hamar-Jajab', label: 'Hamar-Jajab' },
+    { value: 'Hamar-Weyne', label: 'Hamar-Weyne' },
+    { value: 'Hodan', label: 'Hodan' },
+    { value: 'Howl-Wadag', label: 'Howl-Wadag' },
+    { value: 'Karan', label: 'Karan' },
+    { value: 'Shangani', label: 'Shangani' },
+    { value: 'Shingani', label: 'Shingani' },
+    { value: 'Waberi', label: 'Waberi' },
+    { value: 'Wadajir', label: 'Wadajir' },
+    { value: 'Wartanabada', label: 'Wartanabada' },
+    { value: 'Yaqshid', label: 'Yaqshid' },
+
+    // Galmudug
+    { value: 'Adado', label: 'Adado' },
+    { value: 'Balad', label: 'Balad' },
+    { value: 'Dhusamareb', label: 'Dhusamareb' },
+    { value: 'El Dher', label: 'El Dher' },
+    { value: 'El Buur', label: 'El Buur' },
+    { value: 'Galgaduud', label: 'Galgaduud' },
+    { value: 'Guriel', label: 'Guriel' },
+    { value: 'Harardhere', label: 'Harardhere' },
+    { value: 'Hobyo', label: 'Hobyo' },
+
+    // Hirshabelle
+    { value: 'Belet Weyne', label: 'Belet Weyne' },
+    { value: 'Buloburde', label: 'Buloburde' },
+    { value: 'Jalalassi', label: 'Jalalassi' },
+    { value: 'Mahas', label: 'Mahas' },
+    { value: 'Mataban', label: 'Mataban' },
+
+    // Jubaland
+    { value: 'Afmadow', label: 'Afmadow' },
+    { value: 'Badhadhe', label: 'Badhadhe' },
+    { value: 'Buale', label: 'Buale' },
+    { value: 'Bardera', label: 'Bardera' },
+    { value: 'Dhobley', label: 'Dhobley' },
+    { value: 'El Wak', label: 'El Wak' },
+    { value: 'Garbaharey', label: 'Garbaharey' },
+    { value: 'Kismayo', label: 'Kismayo' },
+    { value: 'Luuq', label: 'Luuq' },
+
+    // Puntland
+    { value: 'Bosaso', label: 'Bosaso' },
+    { value: 'Galkayo', label: 'Galkayo' },
+    { value: 'Garowe', label: 'Garowe' },
+    { value: 'Qardho', label: 'Qardho' },
+    { value: 'Burtinle', label: 'Burtinle' },
+    { value: 'Eyl', label: 'Eyl' },
+    { value: 'Ufayn', label: 'Ufayn' },
+    { value: 'Bandarbeyla', label: 'Bandarbeyla' },
+    { value: 'Iskushuban', label: 'Iskushuban' },
+
+    // South West
+    { value: 'Baidoa', label: 'Baidoa' },
+    { value: 'Barawe', label: 'Barawe' },
+    { value: 'Bur Hakaba', label: 'Bur Hakaba' },
+    { value: 'Dinsoor', label: 'Dinsoor' },
+    { value: 'Qansax Dheere', label: 'Qansax Dheere' },
+    { value: 'Tiyeglow', label: 'Tiyeglow' },
+    { value: 'Wanlaweyn', label: 'Wanlaweyn' },
+    { value: 'Xudur', label: 'Xudur' },
+
+    // Somaliland
+    { value: 'Berbera', label: 'Berbera' },
+    { value: 'Burao', label: 'Burao' },
+    { value: 'Borama', label: 'Borama' },
+    { value: 'Erigavo', label: 'Erigavo' },
+    { value: 'Gabiley', label: 'Gabiley' },
+    { value: 'Hargeisa', label: 'Hargeisa' },
+    { value: 'Las Anod', label: 'Las Anod' },
+    { value: 'Zeila', label: 'Zeila' }
   ];
 
+  // State for selections
   const [selectedDistrict, setSelectedDistrict] = useState('All Districts');
   const [selectedYear, setSelectedYear] = useState('All Years');
   const [hiddenBars, setHiddenBars] = useState([]);
-  
-  // District options
-  const districtOptions = [
-    { value: 'North', label: 'North' },
-    { value: 'South', label: 'South' },
-    { value: 'East', label: 'East' },
-    { value: 'West', label: 'West' },
-  ];
+  const [chartData, setChartData] = useState([]);
 
-  // Generate year options for the last 5 years from current year (2025)
-  const currentYear = 2025;
+  // Generate year options for the last 5 years from current year
+  const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 6 }, (_, i) => ({
     value: currentYear - i,
     label: (currentYear - i).toString()
   }));
 
-  // Filter data based on selected district and year
-  const filteredData = data.filter(item => {
-    const districtMatch = selectedDistrict === 'All Districts' || item.district === selectedDistrict;
-    const yearMatch = selectedYear === 'All Years' || item.year === selectedYear;
-    return districtMatch && yearMatch;
+  // API call
+  const { data: apiResponse, isLoading, refetch } = useUserAnalysisQuery({
+    location: selectedDistrict === 'All Districts' ? '' : selectedDistrict,
+    year: selectedYear === 'All Years' ? '' : selectedYear
   });
+
+  // Transform API data to chart format
+  useEffect(() => {
+    if (apiResponse?.data) {
+      const transformedData = apiResponse.data.map(item => ({
+        name: item.month.substring(0, 3), // Shorten month name (Jan, Feb, etc.)
+        users: item.count
+      }));
+      setChartData(transformedData);
+    }
+  }, [apiResponse]);
+
+  // Refetch data when filters change
+  useEffect(() => {
+    refetch();
+  }, [selectedDistrict, selectedYear, refetch]);
 
   // CustomTooltip component
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
-      const monthData = filteredData.find(item => item.name === label);
-      
       return (
         <div className="px-4 py-2 bg-white border border-gray-200 rounded-md shadow-lg">
           <p className="m-0 font-bold text-gray-700">{label}</p>
           <div className="mt-1">
             <div className="flex items-center mb-1">
               <div className="w-3 h-3 mr-2 rounded-full" style={{ backgroundColor: '#FF6B35' }}></div>
-              <p className="m-0"><span className="font-medium">Users:</span> {monthData.users}</p>
+              <p className="m-0"><span className="font-medium">Users:</span> {payload[0].value}</p>
             </div>
           </div>
         </div>
@@ -113,66 +185,67 @@ const UserAnalysis = () => {
           />
         </div>
       </div>
-      
-      <div className="flex flex-grow w-full">
-        <ResponsiveContainer width="100%" height="100%" minHeight={350}>
-          <BarChart
-            data={filteredData}
-            margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
-            <XAxis 
-              dataKey="name" 
-              tick={{ fontSize: 12, fill: '#666' }} 
-              axisLine={{ stroke: '#e0e0e0' }}
-              tickLine={false}
-            />
-            <YAxis 
-              axisLine={false}
-              tickLine={false}
-              tick={{ fontSize: 12, fill: '#666' }}
-              domain={[0, 500]}
-              ticks={[0, 100, 200, 300, 400, 500]}
-            />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }} />
-            <Legend 
-              align="center"
-              verticalAlign="bottom"
-              wrapperStyle={{ paddingTop: '20px' }}
-              onClick={(e) => handleLegendClick(e.dataKey)}
-              payload={[
-                { value: 'Users', dataKey: 'users', type: 'circle', color: '#FF6B35', 
-                  payload: { strokeDasharray: hiddenBars.includes('users') ? '3 3' : '0', fill: '#FF6B35' } },
-              ]}
-              formatter={(value, entry) => (
-                <span style={{ color: hiddenBars.includes(entry.dataKey) ? '#999' : '#333', cursor: 'pointer' }}>
-                  {value}
-                </span>
+
+
+      {isLoading ? (
+        <div className="flex items-center justify-center w-full h-[300px]">
+          <Spin size="small" />
+        </div>
+      ) : (
+        <div className="flex flex-grow w-full">
+          <ResponsiveContainer width="100%" height={350}>
+            <BarChart
+              data={chartData}
+              margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e0e0e0" />
+              <XAxis
+                dataKey="name"
+                tick={{ fontSize: 12, fill: '#666' }}
+                axisLine={{ stroke: '#e0e0e0' }}
+                tickLine={false}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: '#666' }}
+                domain={[0, 'dataMax + 10']} // Auto adjust based on data
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }} />
+              <Legend
+                align="center"
+                verticalAlign="bottom"
+                wrapperStyle={{ paddingTop: '20px' }}
+                onClick={(e) => handleLegendClick(e.dataKey)}
+                payload={[
+                  {
+                    value: 'Users',
+                    dataKey: 'users',
+                    type: 'circle',
+                    color: '#FF6B35',
+                    payload: { strokeDasharray: hiddenBars.includes('users') ? '3 3' : '0', fill: '#FF6B35' }
+                  },
+                ]}
+                formatter={(value, entry) => (
+                  <span style={{ color: hiddenBars.includes(entry.dataKey) ? '#999' : '#333', cursor: 'pointer' }}>
+                    {value}
+                  </span>
+                )}
+              />
+              {!hiddenBars.includes('users') && (
+                <Bar dataKey="users" fill="#FF6B35" radius={[4, 4, 0, 0]} barSize={20}>
+                  <LabelList
+                    dataKey="users"
+                    position="top"
+                    formatter={(value) => value > 0 ? value : null} // Only show labels for non-zero values
+                  />
+                </Bar>
               )}
-            />
-            {!hiddenBars.includes('users') && (
-              <Bar dataKey="users" fill="#FF6B35" radius={[4, 4, 0, 0]} barSize={20}>
-                <LabelList 
-                  dataKey="users" 
-                  position="top" 
-                  content={({ x, y, width, value, index }) => {
-                    // Only show label for June (index 5)
-                    if (index !== 5) return null;
-                    return (
-                      <g>
-                        <rect x={x + width/2 - 20} y={y - 26} width="40" height="22" rx="5" fill="#FF6B35" />
-                        <text x={x + width/2} y={y - 12} fill="#fff" textAnchor="middle" dominantBaseline="middle" fontSize="12">
-                          {value}
-                        </text>
-                      </g>
-                    );
-                  }}
-                />
-              </Bar>
-            )}
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
     </div>
   );
 };

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Table, Progress, Card, Typography, Checkbox, Row, Col, Button, Modal, ConfigProvider, Tooltip, Select } from 'antd';
-import { FaTrash, FaStar, FaStarHalfAlt, FaRegStar, FaAngleLeft, FaAngleRight } from 'react-icons/fa';
+import { Button, Card, Checkbox, Col, ConfigProvider, Modal, Progress, Row, Select, Spin, Table, Tooltip, Typography } from 'antd';
+import { useState } from 'react';
+import { FaAngleLeft, FaAngleRight, FaRegStar, FaStar, FaStarHalfAlt, FaTrash } from 'react-icons/fa';
+import { useDeleteReviewMutation, useGetReviewAnalysisQuery, useGetReviewQuery } from '../../features/AppReview/AppReviewApi';
 import './AppReview.css';
 
 const { Title, Text } = Typography;
@@ -11,56 +12,47 @@ const App = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState(null);
-  
-  // Sample data
+
+  // API hooks
+  const { data: reviewAnalysis, isLoading: isReviewAnalysisLoading } = useGetReviewAnalysisQuery();
+  const { data: reviewData, isLoading: isReviewLoading, refetch } = useGetReviewQuery({
+    page: currentPage,
+    limit: pageSize
+  });
+  const [deleteReview, { isLoading: isDeleting }] = useDeleteReviewMutation();
+
+  // Extract data from API responses
+  const reviews = reviewData?.data || [];
+  const pagination = reviewData?.pagination || {};
+  const analysisData = reviewAnalysis?.data || {};
+
+  // Calculate star counts from rating distribution
   const starCounts = {
-    5: 200,
-    4: 150,
-    3: 90,
-    2: 30,
-    1: 20
+    5: 0,
+    4: 0,
+    3: 0,
+    2: 0,
+    1: 0
   };
-  
-  const totalReviews = 320;
-  const averageRating = 4.5;
-  
-  // Generate sample reviews
-  const generateReviews = (count) => {
-    const reviewTexts = [
-      'Great experience, easy to use!',
-      'This app has been very helpful for my daily tasks.',
-      'Good app but could use some improvements.',
-      'I love the interface, very intuitive!',
-      'Decent functionality but has some bugs.'
-    ];
-    
-    const names = [
-      'Alice Hales', 'Bob Smith', 'Carol Johnson', 'David Williams', 
-      'Emma Brown', 'Frank Miller', 'Grace Davis', 'Henry Wilson'
-    ];
-    
-    const dates = [
-      '15 March 25', '14 March 25', '10 March 25', '5 March 25',
-      '28 Feb 25', '21 Feb 25', '15 Feb 25', '10 Feb 25'
-    ];
-    
-    return Array(count).fill().map((_, index) => ({
-      key: index,
-      name: names[index % names.length],
-      rating: Math.floor(Math.random() * 5) + 1,
-      review: reviewTexts[index % reviewTexts.length],
-      date: dates[index % dates.length]
-    }));
-  };
-  
-  const allReviews = generateReviews(1000);
-  
+
+  if (analysisData.ratingDistribution) {
+    analysisData.ratingDistribution.forEach(item => {
+      const roundedRating = Math.round(item.rating);
+      if (roundedRating >= 1 && roundedRating <= 5) {
+        starCounts[roundedRating] += item.count;
+      }
+    });
+  }
+
+  const totalReviews = analysisData.reviewCount || 0;
+  const averageRating = parseFloat(analysisData.averageRating) || 0;
+
   // Custom star rating component
   const CustomStarRating = ({ value }) => {
     const stars = [];
     const fullStars = Math.floor(value);
     const hasHalfStar = value % 1 !== 0;
-    
+
     for (let i = 1; i <= 5; i++) {
       if (i <= fullStars) {
         stars.push(<FaStar key={i} className="star-icon filled" />);
@@ -70,15 +62,8 @@ const App = () => {
         stars.push(<FaRegStar key={i} className="star-icon" />);
       }
     }
-    
-    return <div className="custom-star-rating">{stars}</div>;
-  };
 
-  // Get current page data
-  const getPaginatedReviews = () => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return allReviews.slice(startIndex, endIndex);
+    return <div className="custom-star-rating">{stars}</div>;
   };
 
   // Handle page size change
@@ -96,14 +81,14 @@ const App = () => {
 
   // Handle next page
   const handleNextPage = () => {
-    if (currentPage < Math.ceil(allReviews.length / pageSize)) {
+    if (currentPage < (pagination.totalPage || 1)) {
       setCurrentPage(currentPage + 1);
     }
   };
 
   // Handle select all on current page
   const handleSelectAll = (e) => {
-    const currentPageKeys = getPaginatedReviews().map(item => item.key);
+    const currentPageKeys = reviews.map(item => item._id);
     if (e.target.checked) {
       setSelectedRowKeys([...new Set([...selectedRowKeys, ...currentPageKeys])]);
     } else {
@@ -114,33 +99,43 @@ const App = () => {
   // Handle individual checkbox change
   const handleCheckboxChange = (e, record) => {
     if (e.target.checked) {
-      setSelectedRowKeys([...selectedRowKeys, record.key]);
+      setSelectedRowKeys([...selectedRowKeys, record._id]);
     } else {
-      setSelectedRowKeys(selectedRowKeys.filter(key => key !== record.key));
+      setSelectedRowKeys(selectedRowKeys.filter(key => key !== record._id));
     }
   };
 
   // Check if all items on current page are selected
-  const isAllSelected = getPaginatedReviews().length > 0 && 
-    getPaginatedReviews().every(item => selectedRowKeys.includes(item.key));
+  const isAllSelected = reviews.length > 0 &&
+    reviews.every(item => selectedRowKeys.includes(item._id));
 
   // Check if some items on current page are selected
-  const isIndeterminate = getPaginatedReviews().some(item => selectedRowKeys.includes(item.key)) && 
+  const isIndeterminate = reviews.some(item => selectedRowKeys.includes(item._id)) &&
     !isAllSelected;
 
   const handleDeleteClick = (record) => {
-    setDeleteItemId(record.key);
+    setDeleteItemId(record._id);
     setIsDeleteModalVisible(true);
   };
 
-  const handleBulkDelete = () => {
-    console.log('Deleting selected items:', selectedRowKeys);
-    setSelectedRowKeys([]);
+  const handleBulkDelete = async () => {
+    try {
+      await Promise.all(selectedRowKeys.map(id => deleteReview(id).unwrap()));
+      setSelectedRowKeys([]);
+    } catch (error) {
+      console.error('Error deleting reviews:', error);
+    }
   };
 
-  const handleConfirmDelete = () => {
-    console.log('Deleting item:', deleteItemId);
-    setIsDeleteModalVisible(false);
+  const handleConfirmDelete = async () => {
+    try {
+      await deleteReview(deleteItemId).unwrap();
+      setIsDeleteModalVisible(false);
+      setDeleteItemId(null);
+      refetch();
+    } catch (error) {
+      console.error('Error deleting review:', error);
+    }
   };
 
   const handleCancelDelete = () => {
@@ -161,45 +156,57 @@ const App = () => {
       key: 'checkbox',
       width: 50,
       render: (_, record) => (
-        <Checkbox 
-          checked={selectedRowKeys.includes(record.key)} 
+        <Checkbox
+          checked={selectedRowKeys.includes(record._id)}
           onChange={(e) => handleCheckboxChange(e, record)}
         />
       )
     },
     {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
+      title: 'Customer ID',
+      dataIndex: 'customer',
+      key: 'customer',
     },
     {
       title: 'Rating',
       dataIndex: 'rating',
       key: 'rating',
-      render: (rating) => <CustomStarRating value={rating} />
+      align: 'start',
+      render: (rating) => (
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <CustomStarRating value={rating} />
+        </div>
+      )
     },
     {
       title: 'Review',
-      dataIndex: 'review',
-      key: 'review',
+      dataIndex: 'comment',
+      key: 'comment',
     },
     {
       title: 'Date',
-      dataIndex: 'date',
-      key: 'date',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (date) => new Date(date).toLocaleDateString()
     },
     {
       title: 'Action',
       key: 'action',
       width: 100,
       render: (_, record) => (
-        <Tooltip title="Delete Review"><FaTrash 
-          className="delete-icon" 
-          onClick={() => handleDeleteClick(record)} 
-        /></Tooltip> 
+        <Tooltip title="Delete Review">
+          <FaTrash
+            className="delete-icon"
+            onClick={() => handleDeleteClick(record)}
+          />
+        </Tooltip>
       ),
     },
   ];
+
+  if (isReviewAnalysisLoading || isReviewLoading) {
+    return <div className="flex items-center justify-center h-[400px]"><Spin size="default" /></div>;
+  }
 
   return (
     <ConfigProvider
@@ -215,7 +222,7 @@ const App = () => {
             <Col xs={24} md={6}>
               <div style={{ textAlign: 'center' }}>
                 <div className="rating-circle">
-                  <Text strong style={{ fontSize: '20px', color: 'white' }}>{averageRating}</Text>
+                  <Text strong style={{ fontSize: '20px', color: 'white' }}>{averageRating.toFixed(1)}</Text>
                 </div>
                 <div>
                   <div className='w-full m-2 mx-auto text-center'>
@@ -232,8 +239,8 @@ const App = () => {
                     <Text>{stars} stars</Text>
                   </Col>
                   <Col span={18}>
-                    <Progress 
-                      percent={(starCounts[stars] / totalReviews) * 100} 
+                    <Progress
+                      percent={totalReviews > 0 ? (starCounts[stars] / totalReviews) * 100 : 0}
                       showInfo={false}
                       strokeColor="#ff9800"
                       trailColor="#f0f0f0"
@@ -250,31 +257,33 @@ const App = () => {
         </Card>
 
         <Title level={4} style={{ margin: '24px 0 16px 0' }}>App Reviews</Title>
-        
+
         {selectedRowKeys.length > 0 && (
           <div style={{ marginBottom: '16px' }}>
-            <Button 
-              type="primary" 
-              danger 
+            <Button
+              type="primary"
+              danger
               onClick={handleBulkDelete}
               icon={<FaTrash />}
+              loading={isDeleting}
             >
               Bulk Delete ({selectedRowKeys.length})
             </Button>
           </div>
         )}
-        
-        <Table 
-          columns={columns} 
-          dataSource={getPaginatedReviews()}
+
+        <Table
+          columns={columns}
+          dataSource={reviews}
           pagination={false}
-          rowKey="key"
+          rowKey="_id"
+          loading={isReviewLoading}
         />
-        
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'end', 
-          alignItems: 'center', 
+
+        <div style={{
+          display: 'flex',
+          justifyContent: 'end',
+          alignItems: 'center',
           marginTop: '16px',
           padding: '16px 0',
           borderTop: '1px solid #f0f0f0'
@@ -283,9 +292,9 @@ const App = () => {
             {selectedRowKeys.length > 0 && (
               <Text style={{ marginRight: '16px' }}>{selectedRowKeys.length} item(s) selected</Text>
             )}
-            <Select 
-              defaultValue="10" 
-              style={{ width: 120 }} 
+            <Select
+              value={pageSize.toString()}
+              style={{ width: 120 }}
               onChange={handlePageSizeChange}
               options={[
                 { value: '10', label: '10 / page' },
@@ -294,24 +303,24 @@ const App = () => {
               ]}
             />
           </div>
-          
+
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <span style={{ margin: '0 16px' }}>
-              {allReviews.length === 0 
-                ? '0-0 of 0' 
-                : `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, allReviews.length)} of ${allReviews.length}`}
+              {pagination.total === 0
+                ? '0-0 of 0'
+                : `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, pagination.total)} of ${pagination.total}`}
             </span>
-            <Button 
-              type="text" 
-              icon={<FaAngleLeft />} 
-              disabled={currentPage === 1} 
+            <Button
+              type="text"
+              icon={<FaAngleLeft />}
+              disabled={currentPage === 1}
               onClick={handlePrevPage}
-              style={{ marginRight: '8px' }} 
+              style={{ marginRight: '8px' }}
             />
-            <Button 
-              type="text" 
-              icon={<FaAngleRight />} 
-              disabled={currentPage >= Math.ceil(allReviews.length / pageSize)}
+            <Button
+              type="text"
+              icon={<FaAngleRight />}
+              disabled={currentPage >= (pagination.totalPage || 1)}
               onClick={handleNextPage}
             />
           </div>
@@ -325,7 +334,7 @@ const App = () => {
           okText="Delete"
           cancelText="Cancel"
           centered
-          okButtonProps={{ danger: true }}
+          okButtonProps={{ danger: true, loading: isDeleting }}
         >
           <p>Are you sure you want to delete this review?</p>
         </Modal>

@@ -65,17 +65,18 @@ const ForgotPassword = () => {
 
           <Form.Item>
             <Button
-              htmlType="submit"
-              type="primary"
-              loading={isLoading}
-              style={{
-                width: "100%",
-                height: 45,
-                fontWeight: "400px",
-                fontSize: "18px",
-                marginTop: 20,
-              }}
-              className="flex items-center justify-center bg-smart  rounded-lg"
+             loading={isLoading}
+            htmlType="submit"
+            type="submit"
+            style={{
+              width: "100%",
+              height: 47,
+              color: "white",
+              fontWeight: "400px",
+              fontSize: "18px",
+              marginTop: 20,
+            }}
+            className="flex items-center justify-center text-base rounded-lg bg-smart hover:bg-smart/90"
             >
               Send OTP
             </Button>

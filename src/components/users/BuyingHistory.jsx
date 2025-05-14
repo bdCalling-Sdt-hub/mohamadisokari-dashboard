@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
 import { Table, Typography, Button, Pagination } from 'antd';
 import { SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
+import { useGetBuyerHistoryQuery } from '../../features/userManagement/UserManagementApi';
+import { useParams } from 'react-router-dom';
 
 const { Title } = Typography;
 
 const BuyingHistory = () => {
+  const { id } = useParams();
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10; // Fixed page size
-  const [sortOrder, setSortOrder] = useState('ascend'); // 'ascend' or 'descend'
+  const [sortOrder, setSortOrder] = useState('ascend'); // 'ascend' or 'descend';
+
+  const { data } = useGetBuyerHistoryQuery(id);
+  console.log(data)
   
   // Mock data for sales
   const generateSalesData = () => {

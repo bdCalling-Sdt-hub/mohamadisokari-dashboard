@@ -1,44 +1,42 @@
 import { baseApi } from "../../utils/ApiBaseQuery";
 
-export const CategoryApi = baseApi.injectEndpoints({
+
+
+export const settingsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // Get all categories
+    // Login
     getCategory: builder.query({
       query: () => ({
-        url: "/admin/category",
+        url: "",
         method: "GET",
       }),
-      providesTags: ["Categories"],
     }),
 
-    // Create a new category
+    // Email Verification
     createCategory: builder.mutation({
       query: (data) => ({
-        url: "/admin/category/create-service",
+        url: "",
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["Categories"],
     }),
 
-    // Update an existing category
     updateCategory: builder.mutation({
-      query: ({ id, data }) => ({
-        url: `/admin/category/${id}`,
+      query: (data, Id) => ({
+        url: `/admin/category/${Id}`,
         method: "PATCH",
         body: data,
       }),
-      invalidatesTags: ["Categories"],
     }),
 
-    // Delete a category
+    // Forgot Password
     deleteCategory: builder.mutation({
       query: (id) => ({
         url: `/admin/category/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Categories"],
     }),
+
   }),
 });
 
@@ -48,4 +46,4 @@ export const {
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
   useDeleteCategoryMutation
-} = CategoryApi;
+} = settingsApi;
