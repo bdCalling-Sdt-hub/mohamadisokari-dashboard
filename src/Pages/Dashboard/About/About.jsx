@@ -1,9 +1,9 @@
 import JoditEditor from "jodit-react";
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { useAddTermsMutation, useGetAllCmsQuery } from "../../../features/cms/cmsApi";
+import { useAddAboutMutation, useGetAllCmsQuery } from "../../../features/cms/cmsApi";
 
-function TermsAndCondition() {
+function About() {
   const editor = useRef(null);
   const [content, setContent] = useState("");
 
@@ -61,13 +61,13 @@ function TermsAndCondition() {
     []
   );
 
-  const { data, isLoading: loadingAllCms , refetch } = useGetAllCmsQuery(); 
-  const [AddTerms, { isLoading }] = useAddTermsMutation();
+  const { data, isLoading: loadingAllCms, refetch } = useGetAllCmsQuery();
+  const [AddAboutUs, { isLoading }] = useAddAboutMutation();
 
   // Set initial content when data is loaded
   useEffect(() => {
-    if (data?.data?.termsOfService) {
-      setContent(data.data.termsOfService);
+    if (data?.data?.aboutUs) {
+      setContent(data.data.aboutUs);
     } else {
       // Fallback content if no terms exist yet
       setContent("Lorem ipsum dolor sit amet consectetur adipisicing elit. Accusantium totam voluptates blanditiis dicta facilis...");
@@ -76,10 +76,9 @@ function TermsAndCondition() {
 
   const handleSave = async () => {
     try {
-      const result = await AddTerms(content).unwrap();
+      const result = await AddAboutUs(content).unwrap();
       refetch();
       toast.success(result?.message);
-      console.log(result);
     } catch (error) {
       toast.error(error?.data?.message || "Failed to save content");
       console.error("Error saving content:", error);
@@ -89,7 +88,7 @@ function TermsAndCondition() {
   return (
     <>
       <div className="w-full">
-        <h1 className="text-[20px] font-medium py-5">Terms And Condition</h1>
+        <h1 className="text-[20px] font-medium py-5">About Us</h1>
         <div className="w-5/5 bg-black">
           {!loadingAllCms && (
             <JoditEditor
@@ -142,4 +141,4 @@ function TermsAndCondition() {
   );
 }
 
-export default React.memo(TermsAndCondition);
+export default React.memo(About);

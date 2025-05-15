@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { Table, Checkbox, Button, Select, Dropdown, Space, ConfigProvider } from 'antd';
-import { AiOutlineEye, AiOutlineDown, AiOutlineUp, AiOutlineFilter } from 'react-icons/ai';
+import { Button, Checkbox, ConfigProvider, Dropdown, Modal, Select, Space, Spin, Table } from 'antd';
+import dayjs from 'dayjs';
+import { useEffect, useState } from 'react';
+import { AiOutlineDown, AiOutlineEye, AiOutlineFilter, AiOutlineUp } from 'react-icons/ai';
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
+import { useGetPerticularTransactionQuery, useGetTransactionQuery } from '../../../features/Transaction/transactionApi';
 import './TransactionTable.css';
+import { baseURL } from '../../../utils/BaseURL';
 
 const TransactionTable = () => {
   const [selectedRows, setSelectedRows] = useState([]);
@@ -11,31 +14,58 @@ const TransactionTable = () => {
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState(null);
   const [filterVisible, setFilterVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedTransactionId, setSelectedTransactionId] = useState(null);
+  const [data, setData] = useState([]);
 
-  // Sample data generation
-  const generateData = () => {
-    return Array(1000).fill().map((_, index) => ({
-      key: index,
-      date: '22 Feb 25',
-      transactionId: `T${2000 + index}`,
-      sellerName: 'Angelique Morse',
-      product: 'Smartphone',
-      amount: 500 + Math.floor(Math.random() * 500),
-      platformShare: 50 + Math.floor(Math.random() * 50),
-      platformSharePercentage: 10,
-    }));
+  // Fetch all transactions
+  const { data: transactionData, isLoading: isTransactionLoading } = useGetTransactionQuery();
+
+  // Fetch specific transaction when selectedTransactionId changes
+  const { data: perticularTransactionData, isLoading: isPerticularTransactionLoading } =
+    useGetPerticularTransactionQuery(selectedTransactionId, { skip: !selectedTransactionId });
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    return dayjs(dateString).format('DD MMM YY');
   };
 
-  const [data, setData] = useState(generateData());
+  // Process API data when it's loaded
+  useEffect(() => {
+    if (transactionData && transactionData.success) {
+      const formattedData = transactionData.data.map((transaction, index) => ({
+        key: transaction._id,
+        date: formatDate(transaction.createdAt),
+        transactionId: transaction.orderNumber,
+        sellerId: transaction.sellerId._id,
+        sellerName: transaction.sellerId.name,
+        sellerImage: transaction.sellerId.image,
+        product: transaction.productId, // Replace with actual product name if available
+        amount: transaction.totalPrice,
+        platformShare: calculatePlatformShare(transaction.totalPrice),
+        platformSharePercentage: 10, // Assuming 10% is the platform fee
+        status: transaction.status,
+        isPaid: transaction.isPaid,
+        confirmBybyer: transaction.confirmBybyer,
+        confirmByseller: transaction.confirmByseller,
+      }));
+      setData(formattedData);
+    }
+  }, [transactionData]);
+
+  // Calculate platform share (10% of total price)
+  const calculatePlatformShare = (totalPrice) => {
+    return (totalPrice * 0.1).toFixed(2);
+  };
 
   // Handle bulk delete
   const handleBulkDelete = () => {
     if (selectedRows.length === 0) return;
-    
+
     const newData = data.filter(item => !selectedRows.includes(item.key));
     setData(newData);
     setSelectedRows([]);
-    
+
     // Adjust current page if we deleted all items on the current page
     if (newData.length <= (currentPage - 1) * pageSize) {
       setCurrentPage(Math.max(1, currentPage - 1));
@@ -45,14 +75,14 @@ const TransactionTable = () => {
   // Handle sorting
   const handleSort = (field) => {
     let order = 'asc';
-    
+
     if (sortField === field) {
       order = sortOrder === 'asc' ? 'desc' : 'asc';
     }
-    
+
     setSortField(field);
     setSortOrder(order);
-    
+
     const sortedData = [...data].sort((a, b) => {
       if (a[field] === b[field]) return 0;
       if (order === 'asc') {
@@ -61,7 +91,7 @@ const TransactionTable = () => {
         return a[field] < b[field] ? 1 : -1;
       }
     });
-    
+
     setData(sortedData);
     setCurrentPage(1); // Reset to first page when sorting
   };
@@ -92,25 +122,13 @@ const TransactionTable = () => {
     ],
   });
 
+  // View transaction details
+  const handleViewTransaction = (id) => {
+    setSelectedTransactionId(id);
+    setModalVisible(true);
+  };
+
   const columns = [
-    {
-      title: '',
-      dataIndex: 'checkbox',
-      key: 'checkbox',
-      width: 50,
-      render: (_, record) => (
-        <Checkbox
-          checked={selectedRows.includes(record.key)}
-          onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedRows([...selectedRows, record.key]);
-            } else {
-              setSelectedRows(selectedRows.filter(key => key !== record.key));
-            }
-          }}
-        />
-      )
-    },
     {
       title: (
         <div className="column-header">
@@ -155,10 +173,13 @@ const TransactionTable = () => {
       dataIndex: 'sellerName',
       key: 'sellerName',
       sorter: true,
-      render: (text) => (
+      render: (text, record) => (
         <div className="seller-info">
           <div className="avatar">
-            <img src="https://i.ibb.co.com/QF3711qv/Frame-2147226793.png" alt="Seller avatar" />
+            <img
+              src={record.sellerImage ? `${baseURL}${record.sellerImage}` : "https://i.ibb.co/QF37v/Frame-2147226793.png"}
+              alt="Seller avatar"
+            />
           </div>
           <span>{text}</span>
         </div>
@@ -178,6 +199,7 @@ const TransactionTable = () => {
       dataIndex: 'product',
       key: 'product',
       sorter: true,
+      render: (text) => <span>Product #{text.slice(-6)}</span>, // Show last 6 characters of the product ID
     },
     {
       title: (
@@ -215,17 +237,11 @@ const TransactionTable = () => {
       title: 'Action',
       key: 'action',
       render: (_, record) => (
-        <Button 
-          type="text" 
-          icon={<AiOutlineEye size={18} />} 
+        <Button
+          type="text"
+          icon={<AiOutlineEye size={18} />}
           className="eye-button"
-          onClick={() => {
-            setData(data.filter(item => item.key !== record.key));
-            // Adjust current page if we deleted the last item on the current page
-            if (data.length % pageSize === 1 && currentPage > 1) {
-              setCurrentPage(currentPage - 1);
-            }
-          }}
+          onClick={() => handleViewTransaction(record.key)}
         />
       ),
     },
@@ -249,34 +265,19 @@ const TransactionTable = () => {
   );
 
   // Check if all items on current page are selected
-  const isAllSelected = paginatedData.length > 0 && 
+  const isAllSelected = paginatedData.length > 0 &&
     paginatedData.every(item => selectedRows.includes(item.key));
 
   // Check if some items on current page are selected
-  const isIndeterminate = paginatedData.some(item => selectedRows.includes(item.key)) && 
+  const isIndeterminate = paginatedData.some(item => selectedRows.includes(item.key)) &&
     !isAllSelected;
 
   // Custom table header
   const tableHeader = () => (
     <div className="custom-table-header">
-      <Checkbox 
-        onChange={handleSelectAll}
-        checked={isAllSelected}
-        indeterminate={isIndeterminate}
-      />
       <span className="header-title">Transaction</span>
       <div className="header-actions">
-        {selectedRows.length > 0 && (
-          <Button 
-            type="primary" 
-            danger
-            onClick={handleBulkDelete}
-            style={{ marginRight: '10px' }}
-          >
-            Bulk Delete ({selectedRows.length})
-          </Button>
-        )}
-        <Dropdown 
+        <Dropdown
           menu={{
             items: [
               {
@@ -300,12 +301,12 @@ const TransactionTable = () => {
                 onClick: () => handleSort('amount'),
               },
             ],
-          }} 
+          }}
           trigger={['click']}
         >
-          <Button style={{border:"1px solid gray",padding:"10px", fontWeight:"unset"}} type="text">
+          <Button style={{ border: "1px solid gray", padding: "10px", fontWeight: "unset" }} type="text">
             <Space>
-              Short
+              Sort
               <AiOutlineDown />
             </Space>
           </Button>
@@ -320,6 +321,131 @@ const TransactionTable = () => {
     setCurrentPage(1); // Reset to first page when changing page size
   };
 
+  // Transaction detail modal
+  const renderTransactionModal = () => {
+  if (isPerticularTransactionLoading) {
+    return (
+      <div className="flex justify-center items-center h-[200px]">
+        <Spin size="small" />
+      </div>
+    );
+  }
+
+  if (!perticularTransactionData || !perticularTransactionData.success) {
+    return (
+      <div className="flex justify-center items-center h-[200px] text-gray-500 italic">
+        No transaction details available
+      </div>
+    );
+  }
+
+  const transaction = perticularTransactionData.data;
+
+  // Helper function for badge colors based on status
+  const getStatusBadgeClasses = (status) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow p-6 m-6 max-w-3xl mx-auto">
+      {/* Header */}
+      <div className="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
+        <h3 className="text-xl font-semibold text-gray-800">Transaction Details</h3>
+        <span
+          className={`inline-block px-3 py-1 text-sm font-semibold rounded-full ${getStatusBadgeClasses(
+            transaction.status
+          )}`}
+        >
+          {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+        </span>
+      </div>
+
+      {/* Transaction Info */}
+      <section className="mb-8 grid grid-cols-2 gap-x-8 gap-y-4 text-gray-700">
+        <DetailRow label="Order Number:" value={transaction.orderNumber} />
+        <DetailRow label="Date:" value={formatDate(transaction.createdAt)} />
+        <DetailRow label="Total Amount:" value={`$${transaction.totalPrice}`} />
+        <DetailRow
+          label="Platform Fee:"
+          value={`$${calculatePlatformShare(transaction.totalPrice)} (10%)`}
+        />
+        <DetailRow
+          label="Payment Status:"
+          value={transaction.isPaid ? 'Paid' : 'Not Paid'}
+          valueClass={transaction.isPaid ? 'text-green-600' : 'text-red-600'}
+        />
+      </section>
+
+      {/* Seller Information */}
+      <UserSection
+        title="Seller Information"
+        user={transaction.sellerId}
+        confirmed={transaction.confirmByseller}
+        showAvatar
+      />
+
+      {/* Customer Information */}
+      <UserSection
+        title="Customer Information"
+        user={transaction.customerId}
+        confirmed={transaction.confirmBybyer}
+        showAvatar={false}
+      />
+    </div>
+  );
+};
+
+// Helper components for cleaner code:
+
+const DetailRow = ({ label, value, valueClass = '' }) => (
+  <div className="flex justify-between border-b border-gray-100 pb-2">
+    <span className="font-medium text-gray-600">{label}</span>
+    <span className={`font-semibold ${valueClass}`}>{value}</span>
+  </div>
+);
+
+const UserSection = ({ title, user, confirmed, showAvatar }) => (
+  <section className="mb-8">
+    <h4 className="text-lg font-semibold mb-4 text-gray-800">{title}</h4>
+    <div className="flex items-center space-x-6 bg-gray-50 p-4 rounded-lg shadow-inner">
+      {showAvatar && (
+        <div className="flex-shrink-0 w-20 h-20 rounded-full overflow-hidden border border-gray-300">
+          <img
+            src={
+              user.image
+                ? `${baseURL}${user.image}`
+                : 'https://i.ibb.co/QF37v/Frame-2147226793.png'
+            }
+            alt={`${user.name} avatar`}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
+      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-8 text-gray-700">
+        <DetailRow label="Name:" value={user.name} />
+        <DetailRow label="Email:" value={user.email} />
+        {user.contactNumber && <DetailRow label="Contact:" value={user.contactNumber} />}
+        <DetailRow
+          label="Confirmation:"
+          value={confirmed ? 'Confirmed' : 'Not Confirmed'}
+          valueClass={confirmed ? 'text-green-600' : 'text-red-600'}
+        />
+      </div>
+    </div>
+  </section>
+);
+
+
   return (
     <ConfigProvider
       theme={{
@@ -331,23 +457,27 @@ const TransactionTable = () => {
       <div className="transaction-table-container">
         {tableHeader()}
         <div className="table-container">
-          <Table 
-            columns={columns}
-            dataSource={paginatedData}
-            pagination={false}
-            rowClassName="transaction-row"
-            onChange={(pagination, filters, sorter) => {
-              if (sorter && sorter.field) {
-                handleSort(sorter.field);
-              }
-            }}
-          />
+          {isTransactionLoading ? (
+            <div className="flex justify-center items-center h-[400px]"><Spin size="default" /></div>
+          ) : (
+            <Table
+              columns={columns}
+              dataSource={paginatedData}
+              pagination={false}
+              rowClassName="transaction-row"
+              onChange={(pagination, filters, sorter) => {
+                if (sorter && sorter.field) {
+                  handleSort(sorter.field);
+                }
+              }}
+            />
+          )}
         </div>
         <div className="pagination-container">
           <div className="flex items-center gap-4">
-            <Select 
-              defaultValue="10" 
-              style={{ width: 120 }} 
+            <Select
+              defaultValue="10"
+              style={{ width: 120 }}
               onChange={handlePageSizeChange}
               options={[
                 { value: '10', label: '10 / page' },
@@ -356,22 +486,22 @@ const TransactionTable = () => {
               ]}
             />
             <div className="page-info">
-              {data.length > 0 ? 
-                `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, data.length)} of ${data.length}` 
+              {data.length > 0 ?
+                `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, data.length)} of ${data.length}`
                 : 'No data'}
             </div>
           </div>
           <div className="flex items-center gap-1 pagination-controls">
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(currentPage - 1)}
               className="pagination-button"
             >
               <IoIosArrowBack size={22} />
             </Button>
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               disabled={currentPage * pageSize >= data.length}
               onClick={() => setCurrentPage(currentPage + 1)}
               className="pagination-button"
@@ -380,6 +510,17 @@ const TransactionTable = () => {
             </Button>
           </div>
         </div>
+
+        <Modal
+          title={null}
+          visible={modalVisible}
+          onCancel={() => setModalVisible(false)}
+          footer={null}
+          width={700}
+          className="transaction-detail-modal"
+        >
+          {renderTransactionModal()}
+        </Modal>
       </div>
     </ConfigProvider>
   );

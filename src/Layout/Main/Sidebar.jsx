@@ -11,7 +11,7 @@ import { FiLogOut, FiUsers } from "react-icons/fi";
 import { BiSolidCategoryAlt } from "react-icons/bi";
 import { TfiLayoutSlider, TfiLayoutSliderAlt } from "react-icons/tfi";
 import { RiContactsBook3Line, RiSettings5Line } from "react-icons/ri";
-import { MdHandyman, MdOutlineHomeRepairService, MdOutlineReportProblem, MdOutlinePrivacyTip } from "react-icons/md";
+import { MdHandyman, MdOutlineHomeRepairService, MdOutlineReportProblem, MdOutlinePrivacyTip ,  MdOutlineRoundaboutLeft } from "react-icons/md";
 import { IoDocumentTextOutline } from "react-icons/io5";
 import { Menu } from "antd";
 import { AiOutlineProduct, AiOutlineUsergroupAdd } from "react-icons/ai";
@@ -42,11 +42,12 @@ const Sidebar = ({ isCollapsed }) => {
       "/support-chat": <PiMessengerLogoBold size={20} />,
       "/pushnotification": <TbBellBolt size={20} />,
       "/privacy-policy": <MdOutlinePrivacyTip size={20} />,
+      "/about-us": < MdOutlineRoundaboutLeft size={20} />,
       "/terms-and-conditions": <IoDocumentTextOutline size={20} />,
       "/faq": <FaQuoteRight size={20} />,
       "/contact": <RiContactsBook3Line size={20} />,
       "/slider": <TfiLayoutSlider size={20} />,
-      "/onboarding-screen": <TfiLayoutSliderAlt size={20} />,
+      "/video": <TfiLayoutSliderAlt size={20} />,
       "/admin-list": <RiSettings5Line size={20} />,
       "/logout": <FiLogOut size={20} />,
     };
@@ -104,6 +105,11 @@ const Sidebar = ({ isCollapsed }) => {
       icon: getIcon("/privacy-policy"),
       label: "Cms",
       children: [
+         {
+          key: "/about-us",
+          icon: getIcon("/about-us"),
+          label: <Link to="/about-us">About Us</Link>,
+        },
         {
           key: "/privacy-policy",
           icon: getIcon("/privacy-policy"),
@@ -125,9 +131,9 @@ const Sidebar = ({ isCollapsed }) => {
           label: <Link to="/slider">Slider</Link>,
         },
         {
-          key: "/onboarding-screen",
-          icon: getIcon("/onboarding-screen"),
-          label: <Link to="/onboarding-screen">Onboarding Screen</Link>,
+          key: "/video",
+          icon: getIcon("/video"),
+          label: <Link to="/video">Video</Link>,
         },
       ],
     },

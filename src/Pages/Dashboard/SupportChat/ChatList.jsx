@@ -9,7 +9,7 @@ import { BsSearch } from 'react-icons/bs';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGetAllChatQuery, useMarkAsReadMutation } from '../../../features/Chat/message';
-import { useDebounce } from '../../../hooks/useDebounce';
+import { useDebounce } from '../../../Hooks/useDebounce';
 import { getImageUrl } from '../../../utils/getImageUrl';
 
 

@@ -41,6 +41,15 @@ export const ProductManagementApi = baseApi.injectEndpoints({
         body: data, // { "productIds": ["dksjfidshgdfhgjfdhgkfdjhg","dksjfidshgdfhgjfdhgkfdjhg"]}
       }),
     }),
+
+      topCategories: builder.query({
+  query: (body) => ({
+    url: `/admin/product-managments/top-category?year=${body.year}${body.month ? `&month=${body.month}` : ''}`,
+    method: "GET",
+  }),
+  }),
+
+
   }),
 });
 
@@ -50,5 +59,6 @@ export const {
   useGetParticularProductQuery,
   useDeleteProductMutation,
   useDeleteMultipleProductMutation,
-  useGetProductsAnalysisQuery
+  useGetProductsAnalysisQuery,
+  useTopCategoriesQuery
 } = ProductManagementApi;

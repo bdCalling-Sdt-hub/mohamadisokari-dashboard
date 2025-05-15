@@ -1,39 +1,19 @@
 import { baseApi } from "../../utils/ApiBaseQuery";
 
-
-
 export const profileApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // Login
-    getCategory: builder.query({
+    getProfile: builder.query({
       query: () => ({
-        url: "/admin/category",
+        url: "/users/profile",
         method: "GET",
       }),
     }),
 
-    // Email Verification
-    createCategory: builder.mutation({
+    updateProfile: builder.mutation({
       query: (data) => ({
-        url: "/admin/category/create-service",
-        method: "POST",
-        body: data,
-      }),
-    }),
-
-    updateCategory: builder.mutation({
-      query: (data, Id) => ({
-        url: `/admin/category/${Id}`,
+        url: "/users/profile",
         method: "PATCH",
-        body: data,
-      }),
-    }),
-
-    // Forgot Password
-    deleteCategory: builder.mutation({
-      query: (id) => ({
-        url: `/admin/category/${id}`,
-        method: "DELETE",
+        body: data
       }),
     }),
 
@@ -42,8 +22,6 @@ export const profileApi = baseApi.injectEndpoints({
 
 // Export hooks
 export const {
-  useGetCategoryQuery,
-  useCreateCategoryMutation,
-  useUpdateCategoryMutation,
-  useDeleteCategoryMutation
+  useGetProfileQuery,
+  useUpdateProfileMutation
 } = profileApi;
