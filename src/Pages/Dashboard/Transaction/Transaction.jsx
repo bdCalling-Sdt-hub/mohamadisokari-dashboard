@@ -17,9 +17,13 @@ const TransactionTable = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState(null);
   const [data, setData] = useState([]);
+  const [paginationInfo, setPaginationInfo] = useState({
+    total: 0,
+    totalPage: 1
+  });
 
-  // Fetch all transactions
-  const { data: transactionData, isLoading: isTransactionLoading } = useGetTransactionQuery();
+  // Fetch transactions with pagination
+  const { data: transactionData, isLoading: isTransactionLoading } = useGetTransactionQuery(currentPage);
 
   // Fetch specific transaction when selectedTransactionId changes
   const { data: perticularTransactionData, isLoading: isPerticularTransactionLoading } =
@@ -40,16 +44,20 @@ const TransactionTable = () => {
         sellerId: transaction.sellerId._id,
         sellerName: transaction.sellerId.name,
         sellerImage: transaction.sellerId.image,
-        product: transaction.productId, // Replace with actual product name if available
+        product: transaction.productId,
         amount: transaction.totalPrice,
         platformShare: calculatePlatformShare(transaction.totalPrice),
-        platformSharePercentage: 10, // Assuming 10% is the platform fee
+        platformSharePercentage: 10,
         status: transaction.status,
         isPaid: transaction.isPaid,
         confirmBybyer: transaction.confirmBybyer,
         confirmByseller: transaction.confirmByseller,
       }));
       setData(formattedData);
+      setPaginationInfo({
+        total: transactionData.pagination.total,
+        totalPage: transactionData.pagination.totalPage
+      });
     }
   }, [transactionData]);
 
@@ -67,8 +75,8 @@ const TransactionTable = () => {
     setSelectedRows([]);
 
     // Adjust current page if we deleted all items on the current page
-    if (newData.length <= (currentPage - 1) * pageSize) {
-      setCurrentPage(Math.max(1, currentPage - 1));
+    if (newData.length === 0 && currentPage > 1) {
+      setCurrentPage(currentPage - 1);
     }
   };
 
@@ -93,7 +101,6 @@ const TransactionTable = () => {
     });
 
     setData(sortedData);
-    setCurrentPage(1); // Reset to first page when sorting
   };
 
   // Filter menu items
@@ -199,7 +206,7 @@ const TransactionTable = () => {
       dataIndex: 'product',
       key: 'product',
       sorter: true,
-      render: (text) => <span>Product #{text.slice(-6)}</span>, // Show last 6 characters of the product ID
+      render: (text) => <span>Product #{text.slice(-6)}</span>,
     },
     {
       title: (
@@ -248,29 +255,19 @@ const TransactionTable = () => {
   ];
 
   const handleSelectAll = (e) => {
-    const currentPageKeys = paginatedData.map(item => item.key);
     if (e.target.checked) {
-      // Add all page items to selection (avoiding duplicates)
+      const currentPageKeys = data.map(item => item.key);
       setSelectedRows([...new Set([...selectedRows, ...currentPageKeys])]);
     } else {
-      // Remove all page items from selection
-      setSelectedRows(selectedRows.filter(key => !currentPageKeys.includes(key)));
+      setSelectedRows([]);
     }
   };
 
-  // Calculate current page data
-  const paginatedData = data.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  // Check if all items are selected
+  const isAllSelected = data.length > 0 && data.every(item => selectedRows.includes(item.key));
 
-  // Check if all items on current page are selected
-  const isAllSelected = paginatedData.length > 0 &&
-    paginatedData.every(item => selectedRows.includes(item.key));
-
-  // Check if some items on current page are selected
-  const isIndeterminate = paginatedData.some(item => selectedRows.includes(item.key)) &&
-    !isAllSelected;
+  // Check if some items are selected
+  const isIndeterminate = data.some(item => selectedRows.includes(item.key)) && !isAllSelected;
 
   // Custom table header
   const tableHeader = () => (
@@ -318,133 +315,125 @@ const TransactionTable = () => {
   // Handle page size change
   const handlePageSizeChange = (value) => {
     setPageSize(Number(value));
-    setCurrentPage(1); // Reset to first page when changing page size
+    setCurrentPage(1);
   };
 
   // Transaction detail modal
   const renderTransactionModal = () => {
-  if (isPerticularTransactionLoading) {
-    return (
-      <div className="flex justify-center items-center h-[200px]">
-        <Spin size="small" />
-      </div>
-    );
-  }
-
-  if (!perticularTransactionData || !perticularTransactionData.success) {
-    return (
-      <div className="flex justify-center items-center h-[200px] text-gray-500 italic">
-        No transaction details available
-      </div>
-    );
-  }
-
-  const transaction = perticularTransactionData.data;
-
-  // Helper function for badge colors based on status
-  const getStatusBadgeClasses = (status) => {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'failed':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+    if (isPerticularTransactionLoading) {
+      return (
+        <div className="flex justify-center items-center h-[200px]">
+          <Spin size="small" />
+        </div>
+      );
     }
+
+    if (!perticularTransactionData || !perticularTransactionData.success) {
+      return (
+        <div className="flex justify-center items-center h-[200px] text-gray-500 italic">
+          No transaction details available
+        </div>
+      );
+    }
+
+    const transaction = perticularTransactionData.data;
+
+    const getStatusBadgeClasses = (status) => {
+      switch (status.toLowerCase()) {
+        case 'completed':
+          return 'bg-green-100 text-green-800';
+        case 'pending':
+          return 'bg-yellow-100 text-yellow-800';
+        case 'failed':
+          return 'bg-red-100 text-red-800';
+        default:
+          return 'bg-gray-100 text-gray-800';
+      }
+    };
+
+    return (
+      <div className="bg-white rounded-lg shadow p-6 m-6 max-w-3xl mx-auto">
+        <div className="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
+          <h3 className="text-xl font-semibold text-gray-800">Transaction Details</h3>
+          <span
+            className={`inline-block px-3 py-1 text-sm font-semibold rounded-full ${getStatusBadgeClasses(
+              transaction.status
+            )}`}
+          >
+            {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+          </span>
+        </div>
+
+        <section className="mb-8 grid grid-cols-2 gap-x-8 gap-y-4 text-gray-700">
+          <DetailRow label="Order Number:" value={transaction.orderNumber} />
+          <DetailRow label="Date:" value={formatDate(transaction.createdAt)} />
+          <DetailRow label="Total Amount:" value={`$${transaction.totalPrice}`} />
+          <DetailRow
+            label="Platform Fee:"
+            value={`$${calculatePlatformShare(transaction.totalPrice)} (10%)`}
+          />
+          <DetailRow
+            label="Payment Status:"
+            value={transaction.isPaid ? 'Paid' : 'Not Paid'}
+            valueClass={transaction.isPaid ? 'text-green-600' : 'text-red-600'}
+          />
+        </section>
+
+        <UserSection
+          title="Seller Information"
+          user={transaction.sellerId}
+          confirmed={transaction.confirmByseller}
+          showAvatar
+        />
+
+        <UserSection
+          title="Customer Information"
+          user={transaction.customerId}
+          confirmed={transaction.confirmBybyer}
+          showAvatar={false}
+        />
+      </div>
+    );
   };
 
-  return (
-    <div className="bg-white rounded-lg shadow p-6 m-6 max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
-        <h3 className="text-xl font-semibold text-gray-800">Transaction Details</h3>
-        <span
-          className={`inline-block px-3 py-1 text-sm font-semibold rounded-full ${getStatusBadgeClasses(
-            transaction.status
-          )}`}
-        >
-          {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-        </span>
-      </div>
-
-      {/* Transaction Info */}
-      <section className="mb-8 grid grid-cols-2 gap-x-8 gap-y-4 text-gray-700">
-        <DetailRow label="Order Number:" value={transaction.orderNumber} />
-        <DetailRow label="Date:" value={formatDate(transaction.createdAt)} />
-        <DetailRow label="Total Amount:" value={`$${transaction.totalPrice}`} />
-        <DetailRow
-          label="Platform Fee:"
-          value={`$${calculatePlatformShare(transaction.totalPrice)} (10%)`}
-        />
-        <DetailRow
-          label="Payment Status:"
-          value={transaction.isPaid ? 'Paid' : 'Not Paid'}
-          valueClass={transaction.isPaid ? 'text-green-600' : 'text-red-600'}
-        />
-      </section>
-
-      {/* Seller Information */}
-      <UserSection
-        title="Seller Information"
-        user={transaction.sellerId}
-        confirmed={transaction.confirmByseller}
-        showAvatar
-      />
-
-      {/* Customer Information */}
-      <UserSection
-        title="Customer Information"
-        user={transaction.customerId}
-        confirmed={transaction.confirmBybyer}
-        showAvatar={false}
-      />
+  const DetailRow = ({ label, value, valueClass = '' }) => (
+    <div className="flex justify-between border-b border-gray-100 pb-2">
+      <span className="font-medium text-gray-600">{label}</span>
+      <span className={`font-semibold ${valueClass}`}>{value}</span>
     </div>
   );
-};
 
-// Helper components for cleaner code:
+  const UserSection = ({ title, user, confirmed, showAvatar }) => (
+    <section className="mb-8">
+      <h4 className="text-lg font-semibold mb-4 text-gray-800">{title}</h4>
+      <div className="flex items-center space-x-6 bg-gray-50 p-4 rounded-lg shadow-inner">
+        {showAvatar && (
+          <div className="flex-shrink-0 w-20 h-20 rounded-full overflow-hidden border border-gray-300">
+            <img
+              src={
+                user.image
+                  ? `${baseURL}${user.image}`
+                  : 'https://i.ibb.co/QF37v/Frame-2147226793.png'
+              }
+              alt={`${user.name} avatar`}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
 
-const DetailRow = ({ label, value, valueClass = '' }) => (
-  <div className="flex justify-between border-b border-gray-100 pb-2">
-    <span className="font-medium text-gray-600">{label}</span>
-    <span className={`font-semibold ${valueClass}`}>{value}</span>
-  </div>
-);
-
-const UserSection = ({ title, user, confirmed, showAvatar }) => (
-  <section className="mb-8">
-    <h4 className="text-lg font-semibold mb-4 text-gray-800">{title}</h4>
-    <div className="flex items-center space-x-6 bg-gray-50 p-4 rounded-lg shadow-inner">
-      {showAvatar && (
-        <div className="flex-shrink-0 w-20 h-20 rounded-full overflow-hidden border border-gray-300">
-          <img
-            src={
-              user.image
-                ? `${baseURL}${user.image}`
-                : 'https://i.ibb.co/QF37v/Frame-2147226793.png'
-            }
-            alt={`${user.name} avatar`}
-            className="w-full h-full object-cover"
+        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-8 text-gray-700">
+          <DetailRow label="Name:" value={user.name} />
+          <DetailRow label="Email:" value={user.email} />
+          {user.contactNumber && <DetailRow label="Contact:" value={user.contactNumber} />}
+          <DetailRow
+            label="Confirmation:"
+            value={confirmed ? 'Confirmed' : 'Not Confirmed'}
+            valueClass={confirmed ? 'text-green-600' : 'text-red-600'}
           />
         </div>
-      )}
-
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-8 text-gray-700">
-        <DetailRow label="Name:" value={user.name} />
-        <DetailRow label="Email:" value={user.email} />
-        {user.contactNumber && <DetailRow label="Contact:" value={user.contactNumber} />}
-        <DetailRow
-          label="Confirmation:"
-          value={confirmed ? 'Confirmed' : 'Not Confirmed'}
-          valueClass={confirmed ? 'text-green-600' : 'text-red-600'}
-        />
       </div>
-    </div>
-  </section>
-);
-
+    </section>
+  );
 
   return (
     <ConfigProvider
@@ -462,7 +451,7 @@ const UserSection = ({ title, user, confirmed, showAvatar }) => (
           ) : (
             <Table
               columns={columns}
-              dataSource={paginatedData}
+              dataSource={data}
               pagination={false}
               rowClassName="transaction-row"
               onChange={(pagination, filters, sorter) => {
@@ -486,8 +475,8 @@ const UserSection = ({ title, user, confirmed, showAvatar }) => (
               ]}
             />
             <div className="page-info">
-              {data.length > 0 ?
-                `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, data.length)} of ${data.length}`
+              {paginationInfo.total > 0 ?
+                `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, paginationInfo.total)} of ${paginationInfo.total}`
                 : 'No data'}
             </div>
           </div>
@@ -502,7 +491,7 @@ const UserSection = ({ title, user, confirmed, showAvatar }) => (
             </Button>
             <Button
               type="text"
-              disabled={currentPage * pageSize >= data.length}
+              disabled={currentPage >= paginationInfo.totalPage}
               onClick={() => setCurrentPage(currentPage + 1)}
               className="pagination-button"
             >

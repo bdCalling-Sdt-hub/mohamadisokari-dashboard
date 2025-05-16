@@ -6,8 +6,8 @@ export const ReportApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // Login
     getAllReport: builder.query({
-      query: () => ({
-        url: "/admin/reports",
+      query: (page) => ({
+        url: `/admin/reports?page=${page}`,
         method: "GET",
       }),
     }),
@@ -19,11 +19,11 @@ export const ReportApi = baseApi.injectEndpoints({
       }),
     }),
 
-    updatePerticularReport: builder.mutation({
-      query: (body, id) => ({
-        url: `/admin/reports/${id}`,
-        method: "PATCH",
-        body: body,
+    updateStatus: builder.mutation({
+      query: ({ status, id }) => ({
+        url: `/admin/reports/${id}/status`,
+        method: "PUT",
+        body: { status: status },
       }),
     }),
 
@@ -71,7 +71,7 @@ export const ReportApi = baseApi.injectEndpoints({
 export const {
   useGetAllReportQuery,
   useGetPerticularReportQuery,
-  useUpdatePerticularReportMutation,
+  useUpdateStatusMutation,
   useDeleteReportMutation,
   useGetReportChartQuery
 } = ReportApi;

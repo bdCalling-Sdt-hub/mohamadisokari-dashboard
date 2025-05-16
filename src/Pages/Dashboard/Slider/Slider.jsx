@@ -194,15 +194,15 @@ function Slider() {
           },
           Pagination: {
             borderRadius: "3px",
-            itemActiveBg: "#18a0fb",
+            itemActiveBg: "#F97316",
           },
           Form: {
             labelFontSize: 16,
           },
           Button: {
-            defaultHoverBg: "#18a0fb ",
+            defaultHoverBg: "#F97316",
             defaultHoverColor: "white",
-            defaultHoverBorderColor: "#18a0fb ",
+            defaultHoverBorderColor: "#F97316",
           },
         },
       }}

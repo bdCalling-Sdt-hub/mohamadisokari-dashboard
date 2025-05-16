@@ -153,7 +153,7 @@ const AdminList = () => {
 
         {isLoading ? (
           <div className="flex justify-center items-center p-10">
-            <Spin size="large" />
+            <Spin size="default" />
           </div>
         ) : (
           <TableBody

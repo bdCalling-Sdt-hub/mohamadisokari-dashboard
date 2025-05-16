@@ -1,12 +1,27 @@
-import React from "react";
 import { Modal } from "antd";
-import evidence from "../../../assets/evidence.png"; // Image path
+import { baseURL } from "../../../utils/BaseURL";
 
-function DetailsModal({ isModalOpen, setIsModalOpen, record }) {
-  // Check if the record data is available
-  if (!record) {
-    return null; // Don't render anything if record is not provided
+function DetailsModal({ isModalOpen, setIsModalOpen, data }) {
+  // Check if data is available
+  if (!data) {
+    return null;
   }
+
+  // Extract relevant information from the data object
+  const {
+    reportId,
+    status,
+    type,
+    reason,
+    location,
+    image,
+    createdAt,
+    updatedAt
+  } = data;
+
+  // Format dates for display
+  const createdDate = new Date(createdAt).toLocaleDateString();
+  const updatedDate = new Date(updatedAt).toLocaleDateString();
 
   return (
     <Modal
@@ -15,58 +30,45 @@ function DetailsModal({ isModalOpen, setIsModalOpen, record }) {
       title="Report Details"
       visible={isModalOpen}
       footer={null}
-      onCancel={() => setIsModalOpen(false)} // Close modal on cancel
+      onCancel={() => setIsModalOpen(false)}
     >
-      <div>
-        <p>
-          <strong>Report ID:</strong> {record.reportID || "N/A"}
-        </p>
-        <p>
-          <strong>Service Provider:</strong> {record.serviceProvider || "N/A"}
-        </p>
-        <p>
-          <strong>Reported By:</strong> {record.reportedBy || "N/A"}
-        </p>
-        <p>
-          <strong>Status:</strong> {record.status || "N/A"}
-        </p>
-      </div>
-
-      <div className="mt-3">
-        <p className="mb-2">
-          <strong>Description:</strong>
-        </p>
-        <div className="border rounded-md p-3">
-          {/* <p>{record.description || }</p> */}
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Tenetur
-            impedit voluptatum mollitia provident! Illum aperiam mollitia eum a
-            alias consequuntur enim voluptatibus quidem distinctio repellendus
-            dicta consequatur inventore ratione neque, iusto officia quam! Harum
-            molestiae sequi minus fugit, officia quo. Aperiam hic consequatur,
-            distinctio dicta eos provident at, excepturi pariatur nam adipisci
-            fugit voluptate perspiciatis tempora tempore debitis obcaecati?
-            Deserunt sequi minima exercitationem? Tempora eos id dolores magni
-            modi quaerat doloribus iure dicta, accusantium quia vitae,
-            voluptatum soluta molestiae totam.
-          </p>
+      <div className="space-y-3">
+        {/* Basic Information Section */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p><strong>Report ID:</strong> {reportId || "N/A"}</p>
+            <p><strong>Type:</strong> {type ? type.charAt(0).toUpperCase() + type.slice(1) : "N/A"}</p>
+          </div>
+          <div>
+            <p><strong>Status:</strong> <span className="capitalize">{status || "N/A"}</span></p>
+            <p><strong>Location:</strong> {location ? location.charAt(0).toUpperCase() + location.slice(1) : "N/A"}</p>
+          </div>
         </div>
-      </div>
 
-      <div className="mt-3">
-        <p className="mb-2">
-          <strong>Evidence:</strong>
-        </p>
-        <div className="border rounded-md flex items-center justify-between flex-wrap">
-          {[...Array(5)].map((_, index) => (
+        {/* Dates Section */}
+        <div className="grid grid-cols-2 gap-4">
+          <p><strong>Created:</strong> {createdDate || "N/A"}</p>
+          <p><strong>Last Updated:</strong> {updatedDate || "N/A"}</p>
+        </div>
+
+        {/* Description Section */}
+        <div className="mt-3">
+          <p className="mb-2 font-medium">Reason for Report:</p>
+          <div className="border rounded-md p-3 bg-gray-50">
+            <p>{reason || "No reason provided"}</p>
+          </div>
+        </div>
+
+        {/* Product Image Section */}
+        <div className="mt-3">
+          <p className="mb-2 font-medium">Product Image:</p>
+          <div className="border rounded-md p-2 flex justify-center">
             <img
-              key={index} // Ensure each item has a unique key
-              className="border rounded-md"
-              width={120} // Size for the image
-              src={evidence} // Image path
-              alt={`Image ${index + 1}`} // Alt text for accessibility
+              src={`${baseURL}${image}`}
+              alt="Reported product"
+              className="max-h-60 object-contain"
             />
-          ))}
+          </div>
         </div>
       </div>
     </Modal>

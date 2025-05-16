@@ -1,10 +1,10 @@
 import { DeleteOutlined, DownloadOutlined, EyeOutlined, FilterOutlined, LeftOutlined, ReloadOutlined, RightOutlined, SearchOutlined, SortAscendingOutlined, SortDescendingOutlined } from "@ant-design/icons";
-import { Button, ConfigProvider, DatePicker, Dropdown, Input, Modal, Select, Table, Tag, Tooltip } from "antd";
+import { Button, ConfigProvider, DatePicker, Dropdown, Input, Modal, Select, Table, Tag, Tooltip, message } from "antd";
 import { useMemo, useState } from "react";
-import { useDeleteReportMutation, useGetAllReportQuery } from "../../../features/Report/ReportApi";
+import toast from "react-hot-toast";
+import { useDeleteReportMutation, useGetAllReportQuery, useGetPerticularReportQuery, useUpdateStatusMutation } from "../../../features/Report/ReportApi";
 import DetailsModal from "./DetailsModal";
 import ReportChart from "./ReportChart";
-
 
 function Report() {
   // Enhanced state management
@@ -28,14 +28,15 @@ function Report() {
 
   // RTK Query hooks
   const {
-    data: reportsData = [],
+    data: reportsData = {},
     isLoading,
     refetch
-  } = useGetAllReportQuery();
+  } = useGetAllReportQuery(tableSettings.currentPage); // Pass current page to API
 
-  console.log(reportsData?.data?.reports)
+  const { data: particularReport, loading: particularReportLoading } = useGetPerticularReportQuery(selectedRecord?._id);
 
   const [deleteReport, { isLoading: isDeleting }] = useDeleteReportMutation();
+  const [updateStatus, { isLoading: isUpdating }] = useUpdateStatusMutation();
 
   // Format the API data for table use
   const userData = useMemo(() => {
@@ -43,16 +44,35 @@ function Report() {
 
     return reportsData?.data?.reports.map(report => ({
       key: report._id || report.id,
-      reportID: report.reportID || `R${report.id}`,
-      serviceProvider: report.serviceProvider,
-      reportedBy: report.reportedBy,
-      status: report.status,
+      reportID: report.reportId || `R${report._id}`,
+      serviceProvider: report.sellerId || "Unknown Provider",
+      reportedBy: report.customerId || "Unknown User",
+      status: report.status || "Pending",
       date: report.date || report.createdAt,
-      priority: report.priority,
-      description: report.description,
+      priority: getPriorityFromType(report.type) || "Medium",
+      description: report.reason || "",
+      type: report.type || "",
+      location: report.location || "",
+      image: report.image || "",
       ...report // Keep all original properties
     }));
   }, [reportsData]);
+
+  // Helper function to determine priority based on report type
+  function getPriorityFromType(type) {
+    if (!type) return "Medium";
+
+    const highPriorityTypes = ["fraud", "fake", "scam", "Product Not Received"];
+    const lowPriorityTypes = ["other", "question", "feedback"];
+
+    if (highPriorityTypes.some(t => type.toLowerCase().includes(t.toLowerCase()))) {
+      return "High";
+    } else if (lowPriorityTypes.some(t => type.toLowerCase().includes(t.toLowerCase()))) {
+      return "Low";
+    }
+
+    return "Medium";
+  }
 
   // Row selection configuration
   const rowSelection = {
@@ -79,7 +99,7 @@ function Report() {
   };
 
   const handleNextPage = () => {
-    const totalPages = Math.ceil(processedData.length / tableSettings.pageSize);
+    const totalPages = reportsData?.data?.meta?.totalPage || 1;
     if (tableSettings.currentPage < totalPages) {
       setTableSettings(prev => ({
         ...prev,
@@ -101,17 +121,32 @@ function Report() {
       }
       setSelectedRowKeys([]);
       setIsDeleteModalVisible(false);
+      // Show success message
+      message.success(`${selectedRowKeys.length} report(s) deleted successfully`);
       // Refresh the data
       refetch();
     } catch (error) {
       console.error("Error deleting reports:", error);
-      // Handle error (you might want to show a notification here)
+      message.error("Failed to delete reports. Please try again.");
     }
   };
 
   const handleViewDetails = (record) => {
     setSelectedRecord(record);
     setIsModalOpen(true);
+  };
+
+  const handleUpdateStatus = async (reportId, newStatus) => {
+    console.log(newStatus);
+
+    try {
+      await updateStatus({ id: reportId, status: newStatus },).unwrap();
+      toast.success(`Status updated to ${newStatus}`);
+      refetch();
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error("Failed to update status. Please try again.");
+    }
   };
 
   const handleSort = (field) => {
@@ -147,7 +182,7 @@ function Report() {
 
   // CSV Export functionality
   const handleExportCSV = () => {
-    if (processedData.length === 0) return;
+    if (!reportsData?.data?.reports || reportsData.data.reports.length === 0) return;
 
     // Create CSV header
     const headers = columns
@@ -156,11 +191,25 @@ function Report() {
       .join(',');
 
     // Create CSV rows
-    const rows = processedData.map(item => {
+    const rows = reportsData.data.reports.map(item => {
+      const formattedItem = {
+        key: item._id || item.id,
+        reportID: item.reportId || `R${item._id}`,
+        serviceProvider: item.sellerId || "Unknown Provider",
+        reportedBy: item.customerId || "Unknown User",
+        status: item.status || "Pending",
+        date: item.date || item.createdAt,
+        priority: getPriorityFromType(item.type) || "Medium",
+        description: item.reason || "",
+        type: item.type || "",
+        location: item.location || "",
+        image: item.image || "",
+      };
+
       return columns
         .filter(col => col.key !== 'action') // Exclude action column
         .map(col => {
-          const value = item[col.dataIndex];
+          const value = formattedItem[col.dataIndex];
 
           // Format date
           if (col.dataIndex === 'date') {
@@ -210,7 +259,7 @@ function Report() {
 
     // Apply status filter
     if (filterStatus) {
-      result = result.filter(item => item.status === filterStatus);
+      result = result.filter(item => item.status.toLowerCase() === filterStatus.toLowerCase());
     }
 
     // Apply month filter
@@ -246,12 +295,18 @@ function Report() {
     return result;
   }, [userData, searchText, filterStatus, selectedMonth, sortState]);
 
-  // Get paginated data
-  const paginatedData = useMemo(() => {
-    const startIndex = (tableSettings.currentPage - 1) * tableSettings.pageSize;
-    const endIndex = startIndex + tableSettings.pageSize;
-    return processedData.slice(startIndex, endIndex);
-  }, [processedData, tableSettings.currentPage, tableSettings.pageSize]);
+  // Status change menu items
+  const getStatusMenuItems = (record) => {
+    const statusOptions = ['resolved'];
+    return {
+      items: statusOptions.map(status => ({
+        key: status,
+        label: status,
+        disabled: record.status === status,
+        onClick: () => handleUpdateStatus(record.key, status)
+      }))
+    };
+  };
 
   // Enhanced columns with sorting and filtering
   const columns = [
@@ -310,22 +365,22 @@ function Report() {
                 {
                   key: 'resolved',
                   label: 'Resolved',
-                  onClick: () => handleFilterStatus('Resolved')
+                  onClick: () => handleFilterStatus('resolved')
                 },
                 {
                   key: 'under-review',
                   label: 'Under Review',
-                  onClick: () => handleFilterStatus('Under Review')
+                  onClick: () => handleFilterStatus('under review')
                 },
                 {
                   key: 'pending',
                   label: 'Pending',
-                  onClick: () => handleFilterStatus('Pending')
+                  onClick: () => handleFilterStatus('pending')
                 },
                 {
                   key: 'rejected',
                   label: 'Rejected',
-                  onClick: () => handleFilterStatus('Rejected')
+                  onClick: () => handleFilterStatus('rejected')
                 }
               ]
             }}
@@ -339,14 +394,20 @@ function Report() {
       ),
       dataIndex: "status",
       key: "status",
-      render: (status) => {
+      render: (status, record) => {
         let color = 'default';
-        if (status === 'Resolved') color = 'success';
-        else if (status === 'Under Review') color = 'processing';
-        else if (status === 'Pending') color = 'warning';
-        else if (status === 'Rejected') color = 'error';
+        if (status.toLowerCase() === 'resolved') color = 'success';
+        else if (status.toLowerCase() === 'under review') color = 'processing';
+        else if (status.toLowerCase() === 'pending') color = 'warning';
+        else if (status.toLowerCase() === 'rejected') color = 'error';
 
-        return <Tag color={color}>{status}</Tag>;
+        return (
+          <Dropdown menu={getStatusMenuItems(record)} trigger={['click']}>
+            <Tag color={color} className="cursor-pointer">
+              {status}
+            </Tag>
+          </Dropdown>
+        );
       },
     },
     {
@@ -454,7 +515,7 @@ function Report() {
             <div>
               <h1 className="text-2xl font-semibold text-gray-800">Report Issues</h1>
               <p className="mt-1 text-gray-500">
-                {processedData.length} {processedData.length === 1 ? 'report' : 'reports'} found
+                {reportsData?.data?.meta?.total || 0} {reportsData?.data?.meta?.total === 1 ? 'report' : 'reports'} found
                 {filterStatus ? ` with status "${filterStatus}"` : ''}
                 {searchText ? ` matching "${searchText}"` : ''}
               </p>
@@ -531,7 +592,7 @@ function Report() {
           <Table
             rowSelection={rowSelection}
             columns={columns}
-            dataSource={paginatedData}
+            dataSource={processedData}
             loading={isLoading}
             size={tableSettings.dense ? "small" : "middle"}
             pagination={false}
@@ -554,9 +615,9 @@ function Report() {
               value={String(tableSettings.pageSize)}
             />
             <span style={{ margin: '0 16px' }}>
-              {processedData.length === 0
-                ? '0-0 of 0'
-                : `${(tableSettings.currentPage - 1) * tableSettings.pageSize + 1}-${Math.min(tableSettings.currentPage * tableSettings.pageSize, processedData.length)} of ${processedData.length}`}
+              {reportsData?.data?.meta
+                ? `${(tableSettings.currentPage - 1) * reportsData.data.meta.limit + 1}-${Math.min(tableSettings.currentPage * reportsData.data.meta.limit, reportsData.data.meta.total)} of ${reportsData.data.meta.total}`
+                : '0-0 of 0'}
             </span>
             <Button
               type="text"
@@ -568,17 +629,18 @@ function Report() {
             <Button
               type="text"
               icon={<RightOutlined />}
-              disabled={tableSettings.currentPage >= Math.ceil(processedData.length / tableSettings.pageSize)}
+              disabled={tableSettings.currentPage >= (reportsData?.data?.meta?.totalPage || 1)}
               onClick={handleNextPage}
             />
           </div>
 
           {/* View Details Modal */}
-          {isModalOpen && selectedRecord && (
+          {particularReportLoading ? <div>Loading...</div> : isModalOpen && (
             <DetailsModal
               isModalOpen={isModalOpen}
               setIsModalOpen={setIsModalOpen}
-              record={selectedRecord}
+              data={particularReport?.data}
+              onStatusChange={(newStatus) => handleUpdateStatus(selectedRecord.key, newStatus)}
             />
           )}
 

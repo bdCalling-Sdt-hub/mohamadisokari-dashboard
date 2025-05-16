@@ -6,8 +6,8 @@ export const AppReviewApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // Login
     getReview: builder.query({
-      query: () => ({
-        url: "/admin/feedback",
+      query: (page) => ({
+        url: `/admin/feedback?page=${page}`,
         method: "GET",
       }),
     }),

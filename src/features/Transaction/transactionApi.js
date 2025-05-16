@@ -3,8 +3,8 @@ import { baseApi } from "../../utils/ApiBaseQuery";
 export const transactionApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getTransaction: builder.query({
-      query: () => ({
-        url: "/orders/transaction",
+      query: (page) => ({
+        url: `/orders/transaction?page=${page}`,
         method: "GET",
       }),
     }),

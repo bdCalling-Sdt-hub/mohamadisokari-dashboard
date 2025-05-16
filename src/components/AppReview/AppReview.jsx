@@ -15,10 +15,7 @@ const App = () => {
 
   // API hooks
   const { data: reviewAnalysis, isLoading: isReviewAnalysisLoading } = useGetReviewAnalysisQuery();
-  const { data: reviewData, isLoading: isReviewLoading, refetch } = useGetReviewQuery({
-    page: currentPage,
-    limit: pageSize
-  });
+  const { data: reviewData, isLoading: isReviewLoading, refetch } = useGetReviewQuery(currentPage); // Fixed: Only pass page number
   const [deleteReview, { isLoading: isDeleting }] = useDeleteReviewMutation();
 
   // Extract data from API responses
@@ -70,6 +67,7 @@ const App = () => {
   const handlePageSizeChange = (value) => {
     setPageSize(Number(value));
     setCurrentPage(1);
+    refetch(); // Refetch data when page size changes
   };
 
   // Handle previous page
@@ -122,6 +120,7 @@ const App = () => {
     try {
       await Promise.all(selectedRowKeys.map(id => deleteReview(id).unwrap()));
       setSelectedRowKeys([]);
+      refetch();
     } catch (error) {
       console.error('Error deleting reviews:', error);
     }
@@ -308,7 +307,7 @@ const App = () => {
             <span style={{ margin: '0 16px' }}>
               {pagination.total === 0
                 ? '0-0 of 0'
-                : `${(currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, pagination.total)} of ${pagination.total}`}
+                : `${(currentPage - 1) * pagination.limit + 1}-${Math.min(currentPage * pagination.limit, pagination.total)} of ${pagination.total}`}
             </span>
             <Button
               type="text"

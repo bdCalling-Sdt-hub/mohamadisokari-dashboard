@@ -34,11 +34,12 @@ import SupportChat from "../Pages/Dashboard/SupportChat/SupportChat.jsx";
 import TermsAndCondition from "../Pages/Dashboard/TermsAndCondition/TermsAndCondition";
 import Transaction from "../Pages/Dashboard/Transaction/Transaction.jsx";
 import Video from "../Pages/Dashboard/Video/Video.jsx";
+import ProtectedRoute from "./ProtectedRoute";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Main />,
+    element: <ProtectedRoute> <Main /> </ProtectedRoute>,
     children: [
       { path: "/", element: <Home /> },
       { path: "/service-provider-list", element: <ServiceProvidersList /> },

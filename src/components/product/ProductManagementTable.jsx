@@ -13,7 +13,7 @@ const { Option } = Select;
 const { confirm } = Modal;
 
 function ProductManagementTable() {
-  
+
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -31,7 +31,7 @@ function ProductManagementTable() {
     searchTerm: searchText,
     category: filters.category,
     location: filters.location,
-    status: filters.status, // Send status as-is to match API expectations
+    status: filters.status,
     page: currentPage
   };
 
@@ -51,14 +51,15 @@ function ProductManagementTable() {
   const formattedData = productData.map((product) => ({
     key: product._id,
     listingDate: new Date(product.createdAt).toLocaleDateString(),
+    createdAt: product.createdAt, // Keep raw date for sorting
     productTitle: product.title,
     category: product.category,
-    seller: product.sellerId, // You may need to adjust this if your API returns seller info differently
+    seller: product.sellerId,
     location: product.location,
     price: `${product.price}`,
     status: product.status === 'available' ? 'Available' : 'Sold',
-    soldDate: product.status === 'sold' ? new Date(product.updatedAt).toLocaleDateString() : null,
     rawStatus: product.status, // Store the original status value from API
+    soldDate: product.status === 'sold' ? new Date(product.updatedAt).toLocaleDateString() : null,
   }));
 
   // Get unique filter options from API data
@@ -166,10 +167,8 @@ function ProductManagementTable() {
 
   // Multiple product delete
   const handleBulkDelete = async (ids) => {
-    console.log(ids)
     try {
-      const response = await deleteMultipleProduct({ productIds: ids }).unwrap();
-      console.log(response)
+      await deleteMultipleProduct({ productIds: ids }).unwrap();
       setSelectedRowKeys([]);
       refetch();
     } catch (error) {
@@ -187,11 +186,8 @@ function ProductManagementTable() {
       title: 'Listing Date',
       dataIndex: 'listingDate',
       key: 'listingDate',
-      sorter: (a, b) => {
-        const dateA = new Date(a.listingDate).getTime();
-        const dateB = new Date(b.listingDate).getTime();
-        return dateA - dateB;
-      },
+      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      render: (_, record) => new Date(record.createdAt).toLocaleDateString(),
     },
     {
       title: 'Product Title',
@@ -231,9 +227,9 @@ function ProductManagementTable() {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      sorter: (a, b) => a.status.localeCompare(b.status),
+      sorter: (a, b) => a.rawStatus.localeCompare(b.rawStatus),
       render: (text, record) => (
-        <span style={{ color: text === 'Available' ? '#52c41a' : '#f5222d' }}>
+        <span style={{ color: record.rawStatus === 'available' ? '#52c41a' : '#f5222d' }}>
           {text}
           {record.soldDate && <div style={{ fontSize: '12px' }}>{record.soldDate}</div>}
         </span>
@@ -299,19 +295,6 @@ function ProductManagementTable() {
               </Select>
             </Col>
 
-            <Col xs={24} sm={12} md={6} lg={5}>
-              <Select
-                placeholder="Status"
-                style={{ width: '100%' }}
-                allowClear
-                onChange={(value) => handleFilterChange(value, 'status')}
-                value={filters.status || undefined}
-              >
-                {statusOptions.map(status => (
-                  <Option key={status} value={status}>{status}</Option>
-                ))}
-              </Select>
-            </Col>
 
             <Col xs={24} md={12} lg={4}>
               <Input

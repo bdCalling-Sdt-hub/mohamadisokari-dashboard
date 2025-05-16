@@ -51,9 +51,7 @@ const ChatList = ({ setIsChatActive, status }) => {
     setSearchTerm(e.target.value);
   };
 
-  if (isLoading) {
-    return <Spin size="small" />
-  }
+
 
 
   return (
@@ -77,7 +75,9 @@ const ChatList = ({ setIsChatActive, status }) => {
           scrollbarWidth: 'thin',
         }}>
 
-        {chatList?.data && chatList?.data?.length > 0 ? (
+       {
+        isLoading ? <div className='flex justify-center items-center h-[200px]'><Spin size="small" /></div> : (
+           chatList?.data && chatList?.data?.length > 0 ? (
           chatList?.data?.map((chat) => (
             <div
               key={chat?._id}
@@ -117,7 +117,9 @@ const ChatList = ({ setIsChatActive, status }) => {
           <div className="flex justify-center items-center h-32">
             <p className={'text-gray-500'}>No chats found</p>
           </div>
-        )}
+      
+        )
+      )}
       </div>
     </div>
   );

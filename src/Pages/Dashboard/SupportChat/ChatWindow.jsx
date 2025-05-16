@@ -18,9 +18,9 @@ const ChatWindow = ({ id }) => {
   const { messages } = useSelector((state) => state.message);
 
 
-  const [sendMessage, { isLoading }] = useMessageSendMutation();
-  const [messageReact] = useReactMessageMutation();
-  const [DeleteMessage] = useDeleteMessageMutation();
+  const [sendMessage, { isLoading: sendLoading }] = useMessageSendMutation();
+  const [messageReact , { isLoading: reactLoading}] = useReactMessageMutation();
+  const [DeleteMessage , { isLoading: deleteLoading}] = useDeleteMessageMutation();
   const loginUserId = localStorage.getItem("userId");
   const [form] = Form.useForm();
   const messagesEndRef = useRef(null);
@@ -310,6 +310,7 @@ const ChatWindow = ({ id }) => {
                       icon={<BsEmojiSmile />}
                       className={`flex items-center justify-center p-1 rounded-full text-gray-600 bg-white hover:bg-gray-100 shadow-sm`}
                       onClick={() => toggleReactionPicker(message._id)}
+                      loading={reactLoading}
                     />
 
                     {/* 3-dot menu button - for current user's messages */}
@@ -319,10 +320,11 @@ const ChatWindow = ({ id }) => {
                           items: [
                             {
                               key: '1',
-                              label: 'Unsend Message',
+                              label: deleteLoading ? 'Deleting...' : 'Unsend Message',
                               icon: <TbTrash size={14} />,
                               onClick: () => handleUnsendMessage(message._id),
-                              danger: true
+                              danger: true,
+                              disabled: deleteLoading 
                             }
                           ]
                         }}
@@ -402,7 +404,6 @@ const ChatWindow = ({ id }) => {
           onFinish={handleCreateNewMessage}
           name="messageForm"
           className="flex w-full items-center px-2 py-1 gap-2 relative"
-          style={{ marginTop: "10px", marginBottom: "-15px" }}
         >
           <div className="flex items-center">
             <Form.Item name="file" valuePropName="file" className="mb-0 mr-1">
@@ -467,7 +468,7 @@ const ChatWindow = ({ id }) => {
                 backgroundColor: '#0047FF',
                 border: 'none',
               }}
-              loading={isLoading}
+              loading={sendLoading}
             />
           </Form.Item>
         </Form>
