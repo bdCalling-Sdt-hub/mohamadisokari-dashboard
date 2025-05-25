@@ -224,22 +224,22 @@ const TransactionTable = () => {
       sorter: true,
       render: (amount) => `$${amount}`,
     },
-    {
-      title: (
-        <div className="column-header">
-          Platform Share
-          <Dropdown menu={getFilterMenu('platformShare')} trigger={['click']}>
-            <Button type="text" size="small" className="filter-button">
-              <AiOutlineFilter />
-            </Button>
-          </Dropdown>
-        </div>
-      ),
-      dataIndex: 'platformShare',
-      key: 'platformShare',
-      sorter: true,
-      render: (share, record) => `$${share} (${record.platformSharePercentage}%)`,
-    },
+    // {
+    //   title: (
+    //     <div className="column-header">
+    //       Platform Share
+    //       <Dropdown menu={getFilterMenu('platformShare')} trigger={['click']}>
+    //         <Button type="text" size="small" className="filter-button">
+    //           <AiOutlineFilter />
+    //         </Button>
+    //       </Dropdown>
+    //     </div>
+    //   ),
+    //   dataIndex: 'platformShare',
+    //   key: 'platformShare',
+    //   sorter: true,
+    //   render: (share, record) => `$${share} (${record.platformSharePercentage}%)`,
+    // },
     {
       title: 'Action',
       key: 'action',

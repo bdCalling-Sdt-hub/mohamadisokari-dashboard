@@ -19,20 +19,22 @@ export const UserManagementApi = baseApi.injectEndpoints({
       }),
     }),
 
-
-    userAnalysis : builder.query({
-      query: (location , year ) => ({
-        url: `/admin/users-managments/user-analytics?location=${location}&year=${year}`,
-        method: "GET",
-      }),
-    }),
-
-   districtWiseUsers: builder.query({
-  query: (body) => ({
-    url: `/admin/users-managments/top-districts?year=${body.year}${body.month ? `&month=${body.month}` : ''}`,
+ userAnalysis: builder.query({
+  query: ({ location, year }) => ({
+    url: `/admin/users-managments/user-analytics?location=${location}&year=${year}`,
     method: "GET",
   }),
+}),
+
+
+districtWiseUsers: builder.query({
+  query: (params) => ({
+    url: `/admin/users-managments/top-districts?year=${params.year}${
+      params.month ? `&month=${params.month}` : ''
+    }${params.page ? `&page=${params.page}` : ''}${params.limit ? `&limit=${params.limit}` : ''}`,
+    method: "GET",
   }),
+}),
 
 
     getSellerHistory : builder.query({

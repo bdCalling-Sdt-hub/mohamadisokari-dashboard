@@ -14,8 +14,8 @@ export const ProductManagementApi = baseApi.injectEndpoints({
     }),
 
     getProductsAnalysis: builder.query({
-      query: (location, year) => ({
-        url: `/admin/product-managments/product-stats??location=${location}&year=${year}`,
+      query: ({ location, year }) => ({
+        url: `/admin/product-managments/product-stats?location=${location}&year=${year}`,
         method: "GET",
       }),
     }),
@@ -42,12 +42,12 @@ export const ProductManagementApi = baseApi.injectEndpoints({
       }),
     }),
 
-      topCategories: builder.query({
-  query: (body) => ({
-    url: `/admin/product-managments/top-category?year=${body.year}${body.month ? `&month=${body.month}` : ''}`,
-    method: "GET",
-  }),
-  }),
+    topCategories: builder.query({
+      query: (body) => ({
+        url: `/admin/product-managments/top-category?year=${body.year}${body.month ? `&month=${body.month}` : ''}`,
+        method: "GET",
+      }),
+    }),
 
 
   }),

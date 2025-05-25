@@ -1,5 +1,5 @@
 import { SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
-import { Button, Pagination, Table, Typography, Tag } from 'antd';
+import { Button, Pagination, Table, Tag, Typography } from 'antd';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useGetBuyerHistoryQuery } from '../../features/userManagement/UserManagementApi';
@@ -14,6 +14,7 @@ const BuyingHistory = () => {
   const [sortOrder, setSortOrder] = useState('descend'); // Default to newest first
 
   const { data: response, isLoading } = useGetBuyerHistoryQuery(id);
+  console.log(response)
   const salesData = response?.data || [];
   const paginationInfo = response?.pagination || { total: 0 };
 

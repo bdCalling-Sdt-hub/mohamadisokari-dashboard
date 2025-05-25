@@ -1,41 +1,80 @@
 "use client";
 
-import { Avatar, Flex, Input, Spin } from 'antd';
+import { Avatar, Flex, Input } from 'antd';
 import moment from 'moment';
-
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { BsSearch } from 'react-icons/bs';
 import { useSelector } from 'react-redux';
+
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGetAllChatQuery, useMarkAsReadMutation } from '../../../features/Chat/message';
-import { useDebounce } from '../../../Hooks/useDebounce';
+import { useDebounce } from '../../../hooks/useDebounce';
 import { getImageUrl } from '../../../utils/getImageUrl';
 
-
-
 const ChatList = ({ setIsChatActive, status }) => {
-
   const router = useNavigate();
-  const { id } = useParams();
+  const { chatRoomId } = useParams();
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const chatListContainerRef = useRef(null);
+  const [scrollPosition, setScrollPosition] = useState(0);
 
   const [markAsRead, { isLoading: markAsReadLoading }] = useMarkAsReadMutation()
-  const { data: chatList, isLoading, isError, refetch } = useGetAllChatQuery(debouncedSearchTerm);
+  const { data: chatListData, isLoading, isError, refetch } = useGetAllChatQuery(debouncedSearchTerm);
 
   const { chats } = useSelector((state) => state);
 
-  const handleSelectChat = async (id) => {
-    router(`/chat/${id}`);
+  // Memoize and sort the chat list to maintain consistent order
+  const chatList = useMemo(() => {
+    if (!chatListData?.data) return [];
+    // Sort by last message time (newest first) or any other criteria you prefer
+    return [...chatListData.data].sort((a, b) => {
+      return new Date(b.lastMessage?.createdAt || 0) - new Date(a.lastMessage?.createdAt || 0);
+    });
+  }, [chatListData]);
+
+  // Save scroll position when scrolling
+  useEffect(() => {
+    const handleScroll = () => {
+      if (chatListContainerRef.current) {
+        setScrollPosition(chatListContainerRef.current.scrollTop);
+      }
+    };
+
+    const chatListContainer = chatListContainerRef.current;
+    if (chatListContainer) {
+      chatListContainer.addEventListener('scroll', handleScroll);
+    }
+
+    return () => {
+      if (chatListContainer) {
+        chatListContainer.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, []);
+
+  // Restore scroll position after data changes or navigation
+  useEffect(() => {
+    if (chatListContainerRef.current && !isLoading) {
+      chatListContainerRef.current.scrollTop = scrollPosition;
+    }
+  }, [chatList, isLoading, scrollPosition]);
+
+  const handleSelectChat = async (chatId) => {
+    // Store current scroll position before navigation
+    if (chatListContainerRef.current) {
+      setScrollPosition(chatListContainerRef.current.scrollTop);
+    }
+
+    router(`/support-chat/chat/${chatId}`);
     if (setIsChatActive) {
       setIsChatActive(true);
     }
 
     try {
-      const response = await markAsRead(id).unwrap();
-      console.log(response)
-      refetch()
+      await markAsRead(chatId).unwrap();
+      refetch();
     } catch (error) {
       toast.error(error.message);
     }
@@ -52,15 +91,12 @@ const ChatList = ({ setIsChatActive, status }) => {
   };
 
 
-
-
   return (
-    <div className={`w-full h-[80vh]  shadow rounded-lg flex flex-col light-mode bg-white border-gray-200`}>
-
-      <div className="p-4 ">
+    <div className="w-full h-[80vh] shadow rounded-lg flex flex-col bg-white border border-gray-200">
+      <div className="p-4">
         <Flex gap={8}>
           <Input
-            prefix={<BsSearch className={`text-subtitle`} size={20} />}
+            prefix={<BsSearch className="mx-1 text-subtitle" size={20} />}
             placeholder="Search for..."
             allowClear
             style={{ width: '100%', height: 42 }}
@@ -70,56 +106,58 @@ const ChatList = ({ setIsChatActive, status }) => {
         </Flex>
       </div>
 
-      <div className={`chat-list-container flex-1 overflow-y-auto px-4 scrollbar-light`}
+      <div
+        ref={chatListContainerRef}
+        className="chat-list-container flex-1 overflow-y-auto px-4 scrollbar-light"
         style={{
           scrollbarWidth: 'thin',
         }}>
-
-       {
-        isLoading ? <div className='flex justify-center items-center h-[200px]'><Spin size="small" /></div> : (
-           chatList?.data && chatList?.data?.length > 0 ? (
-          chatList?.data?.map((chat) => (
+        <style jsx global>{`
+          .chat-list-container::-webkit-scrollbar {
+            width: 6px;
+          }
+          .chat-list-container::-webkit-scrollbar-track {
+            background: #FFFFFF;
+          }
+          .chat-list-container::-webkit-scrollbar-thumb {
+            background-color: #CBD5E0;
+          }
+        `}</style>
+        {chatList?.length > 0 ? (
+          chatList.map((chat) => (
             <div
               key={chat?._id}
               onClick={() => handleSelectChat(chat?._id)}
               className={`flex items-center gap-4 p-4 cursor-pointer rounded-lg
-                        ${chat?._id === id
-                  ? ('bg-[#EBF4FF]')
-                  : ('hover:bg-[#EBF4FF]')}
-                      'text-gray-800'}`}
+            ${chat?._id === chatRoomId ? 'bg-gray-200' : 'hover:bg-gray-100'}
+            text-gray-800`}
             >
-              <Avatar size={50} src={getImageUrl(chat?.participants?.[0]?.profile)} />
+              <Avatar size={50} src={getImageUrl(chat?.participants?.[0]?.image)} />
               <div className="flex-1">
-                <h3 className="font-medium ellipsis truncate max-w-[20ch]">
-                  {chat?.participants?.[0]?.userName || "User"}
+                <h3 className="font-medium max-w-[20ch]">
+                  {chat?.participants?.[0]?.name.split(' ')[0] || "User"}
                 </h3>
-                <p className={`text-sm truncate text-gray-600`}>
-                  {chat?.lastMessage?.text?.slice(0, 25)}
+                <p className="text-sm truncate text-gray-600">
+                  {chat?.lastMessage?.text?.slice(0, 25) || ''}
                 </p>
               </div>
               <div className="text-right flex flex-col gap-2">
-                <p className={`text-sm text-gray-500`}>
+                <p className="text-sm text-gray-500">
                   {formatTime(chat?.lastMessage?.createdAt)}
                 </p>
-
-                <p className={`text-sm text-gray-500`}>
-                  {chats?.unreadCount === 0 ? null : (
-                    <span className="bg-primary text-white rounded-full px-2 py-1 text-xs">
-                      {chats?.unreadCount}
-                    </span>
-                  )}
-                </p>
+                {chat?.unreadCount > 0 && (
+                  <span className="bg-primary text-white rounded-full px-2 py-1 text-xs">
+                    {chat?.unreadCount}
+                  </span>
+                )}
               </div>
-
             </div>
           ))
         ) : (
           <div className="flex justify-center items-center h-32">
-            <p className={'text-gray-500'}>No chats found</p>
+            <p className="text-gray-500">No chats found</p>
           </div>
-      
-        )
-      )}
+        )}
       </div>
     </div>
   );

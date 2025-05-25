@@ -31,29 +31,32 @@ function Report() {
     data: reportsData = {},
     isLoading,
     refetch
-  } = useGetAllReportQuery(tableSettings.currentPage); // Pass current page to API
+  } = useGetAllReportQuery(tableSettings.currentPage);
 
   const { data: particularReport, loading: particularReportLoading } = useGetPerticularReportQuery(selectedRecord?._id);
 
   const [deleteReport, { isLoading: isDeleting }] = useDeleteReportMutation();
   const [updateStatus, { isLoading: isUpdating }] = useUpdateStatusMutation();
 
-  // Format the API data for table use
+  // Format the API data for table use - FIXED to match your data structure
   const userData = useMemo(() => {
     if (!reportsData || !reportsData?.data?.reports) return [];
 
     return reportsData?.data?.reports.map(report => ({
-      key: report._id || report.id,
-      reportID: report.reportId || `R${report._id}`,
-      serviceProvider: report.sellerId || "Unknown Provider",
-      reportedBy: report.customerId || "Unknown User",
-      status: report.status || "Pending",
-      date: report.date || report.createdAt,
+      key: report._id,
+      reportID: report.reportId,
+      serviceProvider: report.sellerId?.name || "Unknown Provider",
+      reportedBy: report.customerId?.name || "Unknown User",
+      status: report.status || "pending",
+      date: report.createdAt || report.updatedAt,
       priority: getPriorityFromType(report.type) || "Medium",
       description: report.reason || "",
       type: report.type || "",
       location: report.location || "",
       image: report.image || "",
+      customerLocation: report.customerId?.location || "",
+      sellerImage: report.sellerId?.image || "",
+      customerImage: report.customerId?.image || "",
       ...report // Keep all original properties
     }));
   }, [reportsData]);
@@ -62,7 +65,7 @@ function Report() {
   function getPriorityFromType(type) {
     if (!type) return "Medium";
 
-    const highPriorityTypes = ["fraud", "fake", "scam", "Product Not Received"];
+    const highPriorityTypes = ["fraud", "fake", "scam", "Product Not Received", "fanke"];
     const lowPriorityTypes = ["other", "question", "feedback"];
 
     if (highPriorityTypes.some(t => type.toLowerCase().includes(t.toLowerCase()))) {
@@ -85,7 +88,7 @@ function Report() {
     setTableSettings(prev => ({
       ...prev,
       pageSize: Number(value),
-      currentPage: 1 // Reset to first page when page size changes
+      currentPage: 1
     }));
   };
 
@@ -115,15 +118,12 @@ function Report() {
 
   const confirmDelete = async () => {
     try {
-      // Delete each selected report sequentially
       for (const key of selectedRowKeys) {
         await deleteReport(key).unwrap();
       }
       setSelectedRowKeys([]);
       setIsDeleteModalVisible(false);
-      // Show success message
       message.success(`${selectedRowKeys.length} report(s) deleted successfully`);
-      // Refresh the data
       refetch();
     } catch (error) {
       console.error("Error deleting reports:", error);
@@ -137,10 +137,8 @@ function Report() {
   };
 
   const handleUpdateStatus = async (reportId, newStatus) => {
-    console.log(newStatus);
-
     try {
-      await updateStatus({ id: reportId, status: newStatus },).unwrap();
+      await updateStatus({ id: reportId, status: newStatus }).unwrap();
       toast.success(`Status updated to ${newStatus}`);
       refetch();
     } catch (error) {
@@ -158,21 +156,20 @@ function Report() {
 
   const handleSearch = (e) => {
     setSearchText(e.target.value);
-    setTableSettings(prev => ({ ...prev, currentPage: 1 })); // Reset to first page when searching
+    setTableSettings(prev => ({ ...prev, currentPage: 1 }));
   };
 
   const handleFilterStatus = (status) => {
     setFilterStatus(status === filterStatus ? null : status);
-    setTableSettings(prev => ({ ...prev, currentPage: 1 })); // Reset to first page when filtering
+    setTableSettings(prev => ({ ...prev, currentPage: 1 }));
   };
 
   const handleMonthChange = (date) => {
     setSelectedMonth(date);
-    setTableSettings(prev => ({ ...prev, currentPage: 1 })); // Reset to first page when filtering by month
+    setTableSettings(prev => ({ ...prev, currentPage: 1 }));
   };
 
   const handleRefresh = () => {
-    // Clear filters and refresh data
     setSearchText('');
     setFilterStatus(null);
     setSelectedMonth(null);
@@ -180,56 +177,38 @@ function Report() {
     refetch();
   };
 
-  // CSV Export functionality
+  // CSV Export functionality - FIXED to match new data structure
   const handleExportCSV = () => {
     if (!reportsData?.data?.reports || reportsData.data.reports.length === 0) return;
 
-    // Create CSV header
-    const headers = columns
-      .filter(col => col.key !== 'action') // Exclude action column
-      .map(col => col.dataIndex)
-      .join(',');
+    const headers = [
+      'Report ID',
+      'Service Provider',
+      'Reported By',
+      'Status',
+      'Date',
+      'Priority',
+      'Type',
+      'Description',
+      'Location'
+    ];
 
-    // Create CSV rows
     const rows = reportsData.data.reports.map(item => {
-      const formattedItem = {
-        key: item._id || item.id,
-        reportID: item.reportId || `R${item._id}`,
-        serviceProvider: item.sellerId || "Unknown Provider",
-        reportedBy: item.customerId || "Unknown User",
-        status: item.status || "Pending",
-        date: item.date || item.createdAt,
-        priority: getPriorityFromType(item.type) || "Medium",
-        description: item.reason || "",
-        type: item.type || "",
-        location: item.location || "",
-        image: item.image || "",
-      };
-
-      return columns
-        .filter(col => col.key !== 'action') // Exclude action column
-        .map(col => {
-          const value = formattedItem[col.dataIndex];
-
-          // Format date
-          if (col.dataIndex === 'date') {
-            return new Date(value).toLocaleDateString();
-          }
-
-          // Handle string values with commas
-          if (typeof value === 'string' && value.includes(',')) {
-            return `"${value}"`;
-          }
-
-          return value;
-        })
-        .join(',');
+      return [
+        item.reportId || `R${item._id}`,
+        item.sellerId?.name || "Unknown Provider",
+        item.customerId?.name || "Unknown User",
+        item.status || "pending",
+        new Date(item.createdAt).toLocaleDateString(),
+        getPriorityFromType(item.type) || "Medium",
+        item.type || "",
+        `"${item.reason || ""}"`, // Wrap in quotes to handle commas
+        item.location || ""
+      ].join(',');
     }).join('\n');
 
-    // Combine header and rows
-    const csv = `${headers}\n${rows}`;
+    const csv = `${headers.join(',')}\n${rows}`;
 
-    // Create download link
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -253,7 +232,9 @@ function Report() {
       result = result.filter(item =>
         (item.reportID && item.reportID.toLowerCase().includes(searchLower)) ||
         (item.serviceProvider && item.serviceProvider.toLowerCase().includes(searchLower)) ||
-        (item.reportedBy && item.reportedBy.toLowerCase().includes(searchLower))
+        (item.reportedBy && item.reportedBy.toLowerCase().includes(searchLower)) ||
+        (item.type && item.type.toLowerCase().includes(searchLower)) ||
+        (item.description && item.description.toLowerCase().includes(searchLower))
       );
     }
 
@@ -283,7 +264,7 @@ function Report() {
         return sortState.order === 'asc' ? dateA - dateB : dateB - dateA;
       }
 
-      if (typeof aValue === 'string') {
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortState.order === 'asc'
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
@@ -295,16 +276,17 @@ function Report() {
     return result;
   }, [userData, searchText, filterStatus, selectedMonth, sortState]);
 
-  // Status change menu items
+  // Status change menu items - FIXED to match your status values
   const getStatusMenuItems = (record) => {
-    const statusOptions = ['resolved'];
+    const statusOptions = ['resolved', 'under review', 'pending', 'rejected'];
     return {
-      items: statusOptions.map(status => ({
-        key: status,
-        label: status,
-        disabled: record.status === status,
-        onClick: () => handleUpdateStatus(record.key, status)
-      }))
+      items: statusOptions
+        .filter(status => status !== record.status) // Don't show current status
+        .map(status => ({
+          key: status,
+          label: status.charAt(0).toUpperCase() + status.slice(1),
+          onClick: () => handleUpdateStatus(record.key, status)
+        }))
     };
   };
 
@@ -326,7 +308,7 @@ function Report() {
       ),
       dataIndex: "reportID",
       key: "reportID",
-      render: (text) => <span className="font-medium">{text}</span>,
+      render: (text) => <span className="font-medium text-blue-600">{text}</span>,
     },
     {
       title: (
@@ -344,11 +326,42 @@ function Report() {
       ),
       dataIndex: "serviceProvider",
       key: "serviceProvider",
+      render: (text, record) => (
+        <div className="flex items-center gap-2">
+          {record.sellerImage && (
+            <img 
+              src={record.sellerImage} 
+              alt={text}
+              className="w-6 h-6 rounded-full object-cover"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          )}
+          <span>{text}</span>
+        </div>
+      ),
     },
     {
       title: "Reported By",
       dataIndex: "reportedBy",
       key: "reportedBy",
+      render: (text, record) => (
+        <div className="flex items-center gap-2">
+          {record.customerImage && (
+            <img 
+              src={record.customerImage} 
+              alt={text}
+              className="w-6 h-6 rounded-full object-cover"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          )}
+          <div>
+            <div>{text}</div>
+            {record.customerLocation && (
+              <div className="text-xs text-gray-500">{record.customerLocation}</div>
+            )}
+          </div>
+        </div>
+      ),
     },
     {
       title: (
@@ -403,7 +416,7 @@ function Report() {
 
         return (
           <Dropdown menu={getStatusMenuItems(record)} trigger={['click']}>
-            <Tag color={color} className="cursor-pointer">
+            <Tag color={color} className="cursor-pointer capitalize">
               {status}
             </Tag>
           </Dropdown>
@@ -434,6 +447,16 @@ function Report() {
           </Tooltip>
         );
       },
+    },
+    {
+      title: "Type",
+      dataIndex: "type",
+      key: "type",
+      render: (type) => (
+        <Tag color="blue" className="capitalize">
+          {type}
+        </Tag>
+      ),
     },
     {
       title: "Priority",
@@ -515,7 +538,7 @@ function Report() {
             <div>
               <h1 className="text-2xl font-semibold text-gray-800">Report Issues</h1>
               <p className="mt-1 text-gray-500">
-                {reportsData?.data?.meta?.total || 0} {reportsData?.data?.meta?.total === 1 ? 'report' : 'reports'} found
+                {reportsData?.data?.meta?.total || processedData.length} {(reportsData?.data?.meta?.total || processedData.length) === 1 ? 'report' : 'reports'} found
                 {filterStatus ? ` with status "${filterStatus}"` : ''}
                 {searchText ? ` matching "${searchText}"` : ''}
               </p>
@@ -536,6 +559,7 @@ function Report() {
                   icon={<DownloadOutlined />}
                   onClick={handleExportCSV}
                   className="flex items-center justify-center"
+                  disabled={!reportsData?.data?.reports || reportsData.data.reports.length === 0}
                 >
                   Export
                 </Button>
@@ -546,7 +570,7 @@ function Report() {
           <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
             <div className="flex flex-1 gap-3">
               <Input
-                placeholder="Search by ID, provider, or reporter..."
+                placeholder="Search by ID, provider, reporter, type..."
                 prefix={<SearchOutlined className="text-gray-400" />}
                 className="max-w-md"
                 value={searchText}
@@ -599,6 +623,7 @@ function Report() {
             rowClassName="hover:bg-gray-50 transition-colors"
             bordered={tableSettings.showBorders}
             className={tableSettings.showBorders ? "" : "table-borderless"}
+            scroll={{ x: 1200 }}
           />
 
           {/* Custom Pagination */}
@@ -617,7 +642,7 @@ function Report() {
             <span style={{ margin: '0 16px' }}>
               {reportsData?.data?.meta
                 ? `${(tableSettings.currentPage - 1) * reportsData.data.meta.limit + 1}-${Math.min(tableSettings.currentPage * reportsData.data.meta.limit, reportsData.data.meta.total)} of ${reportsData.data.meta.total}`
-                : '0-0 of 0'}
+                : `1-${processedData.length} of ${processedData.length}`}
             </span>
             <Button
               type="text"
@@ -635,13 +660,17 @@ function Report() {
           </div>
 
           {/* View Details Modal */}
-          {particularReportLoading ? <div>Loading...</div> : isModalOpen && (
-            <DetailsModal
-              isModalOpen={isModalOpen}
-              setIsModalOpen={setIsModalOpen}
-              data={particularReport?.data}
-              onStatusChange={(newStatus) => handleUpdateStatus(selectedRecord.key, newStatus)}
-            />
+          {particularReportLoading ? (
+            <div>Loading...</div>
+          ) : (
+            isModalOpen && (
+              <DetailsModal
+                isModalOpen={isModalOpen}
+                setIsModalOpen={setIsModalOpen}
+                data={particularReport?.data}
+                onStatusChange={(newStatus) => handleUpdateStatus(selectedRecord.key, newStatus)}
+              />
+            )
           )}
 
           {/* Delete Confirmation Modal */}

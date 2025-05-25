@@ -5,9 +5,9 @@ const { Option } = Select;
 
 const CustomDropdown = ({ onChange, value, ...props }) => {
   const months = [
-    'This Month',
-    'This Year',
-    'Alltime'
+    { label: 'This Month', value: 'thisMonth' },
+    { label: 'This Year', value: 'thisYear' },
+    { label: 'All time', value: 'allTime' },
   ];
 
   return (
@@ -18,9 +18,9 @@ const CustomDropdown = ({ onChange, value, ...props }) => {
       style={{ width: 200 }}
       {...props}
     >
-      {months.map((month, index) => (
-        <Option key={month} value={index + 1}>
-          {month}
+      {months.map((month) => (
+        <Option key={month.value} value={month.value}>
+          {month.label}
         </Option>
       ))}
     </Select>

@@ -25,8 +25,8 @@ export const commentApi = baseApi.injectEndpoints({
     }),
 
     getAllMassage: builder.query({
-      query: (value) => ({
-        url: `/messages/${value}`,
+      query: (id) => ({
+        url: `/messages/${id}?limit=${2000}`,
         method: "GET",
       }),
       providesTags: ["chat"],

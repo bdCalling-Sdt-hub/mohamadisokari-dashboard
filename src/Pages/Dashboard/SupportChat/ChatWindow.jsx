@@ -19,8 +19,8 @@ const ChatWindow = ({ id }) => {
 
 
   const [sendMessage, { isLoading: sendLoading }] = useMessageSendMutation();
-  const [messageReact , { isLoading: reactLoading}] = useReactMessageMutation();
-  const [DeleteMessage , { isLoading: deleteLoading}] = useDeleteMessageMutation();
+  const [messageReact, { isLoading: reactLoading }] = useReactMessageMutation();
+  const [DeleteMessage, { isLoading: deleteLoading }] = useDeleteMessageMutation();
   const loginUserId = localStorage.getItem("userId");
   const [form] = Form.useForm();
   const messagesEndRef = useRef(null);
@@ -189,7 +189,7 @@ const ChatWindow = ({ id }) => {
         {users?.participants?.map((participantId, index) => (
           <div key={participantId} className="relative">
             <Avatar
-              src={getImageUrl(participantId?.profile)}
+              src={getImageUrl(participantId?.image)}
               size={40}
             />
             <Badge
@@ -244,7 +244,7 @@ const ChatWindow = ({ id }) => {
           }
         `}</style>
 
-        {messages?.map((message, index) => {
+        {messages?.slice().reverse().map((message, index) => {
           const isCurrentUser = message.sender?._id === loginUserId;
           const isDeleted = message.isDeleted === true;
 
@@ -324,7 +324,7 @@ const ChatWindow = ({ id }) => {
                               icon: <TbTrash size={14} />,
                               onClick: () => handleUnsendMessage(message._id),
                               danger: true,
-                              disabled: deleteLoading 
+                              disabled: deleteLoading
                             }
                           ]
                         }}

@@ -10,6 +10,16 @@ export const cmsApi = baseApi.injectEndpoints({
       }),
     }),
 
+     getContact : builder.query({
+      query: () => ({
+        url: "/support",
+        method: "GET",
+      }),
+    }),
+
+
+
+
     addPrivacyPolicy: builder.mutation({
       query: (data) => ({
         url: "/settings/",
@@ -43,6 +53,16 @@ export const cmsApi = baseApi.injectEndpoints({
     }),
 
 
+     contact: builder.mutation({
+      query: (data) => ({
+        url: "/admin/support/",
+        method: "PUT",
+        body: data
+      }),
+    }),
+
+    
+
 
   }),
 });
@@ -53,5 +73,7 @@ export const {
   useAddAboutMutation,
   useAddTermsMutation,
   useAddSupportMutation,
-  useGetAllCmsQuery
+  useGetAllCmsQuery,
+  useContactMutation,
+  useGetContactQuery
 } = cmsApi;

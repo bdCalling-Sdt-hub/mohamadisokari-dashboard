@@ -28,17 +28,17 @@ const CategoryList = () => {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    if (categories) {
-      const formattedData = categories?.data?.map((category) => ({
-        key: category._id,
-        name: category.name,
-        image: category.image,
-        totalProducts: category.totalProducts || 0,
-        originalData: category
-      }));
-      setData(formattedData);
-    }
-  }, [categories]);
+  if (categories) {
+    const formattedData = categories?.data?.map((category) => ({
+      key: category._id,
+      name: category.name,
+      image: category.image,
+      totalProducts: category.countCat || 0, // Changed from countCat to totalProducts
+      originalData: category
+    }));
+    setData(formattedData);
+  }
+}, [categories]);
 
   // Function to show modal for adding new category
   const showAddModal = () => {
@@ -200,11 +200,12 @@ const CategoryList = () => {
         />
       ),
     },
-    {
-      title: 'Total Products',
-      dataIndex: 'totalProducts',
-      key: 'totalProducts',
-    },
+        {
+        title: 'Total Products',
+        dataIndex: 'totalProducts',
+        key: 'totalProducts',
+        render: (countCat) => <span className='flex items-center ml-10'>{countCat}</span>,
+      },
     {
       title: 'Action',
       key: 'action',
@@ -255,7 +256,7 @@ const CategoryList = () => {
         },
       }}
     >
-      <div className='w-9/12'>
+      <div className=''>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',

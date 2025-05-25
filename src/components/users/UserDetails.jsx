@@ -1,20 +1,29 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Typography } from 'antd';
+import { Layout, Menu, Spin, Typography } from 'antd';
 import { UserOutlined, ShoppingCartOutlined, ShoppingOutlined } from '@ant-design/icons';
 import Imformation from './Imformation';
 import SalesHistory from './SalesHistory';
 import BuyingHistory from './BuyingHistory';
+import { useGetPerticularUserQuery } from '../../features/userManagement/UserManagementApi';
+import { useParams } from 'react-router-dom';
+import { baseApi } from '../../utils/ApiBaseQuery';
 
 const { Sider, Content } = Layout;
 
 const UserDetails = () => {
+  const { id } = useParams();
   const [activeMenu, setActiveMenu] = useState('profile');
+
+  const { data, isLoading } = useGetPerticularUserQuery(id);
+
 
   const handleMenuClick = (key) => {
     setActiveMenu(key);
   };
 
   const renderContent = () => {
+
+
     switch (activeMenu) {
       case 'profile':
         return <Imformation />;
@@ -36,15 +45,16 @@ const UserDetails = () => {
           className="p-6"
         >
           <div className="flex flex-col items-center mb-6">
-            <div className="w-24 h-24 mb-3 overflow-hidden rounded-full">
+            {
+              isLoading ? <Spin size="small" /> :   <><div className="w-24 h-24 mb-3 overflow-hidden rounded-full">
               <img 
-                src="https://i.ibb.co.com/qfZfZyn/2432ead54ddc4dde16b04ac2b970331e.png" 
+                src={data?.data?.image ? `${baseApi}${data?.data?.image}` : "https://i.ibb.co.com/qfZfZyn/2432ead54ddc4dde16b04ac2b970331e.png"} 
                 alt="Amina Ali" 
                 className="object-cover w-full h-full"
               />
             </div>
-            <Typography.Title level={4} className="mb-1">Amina Ali</Typography.Title>
-            <Typography.Text type="secondary">Member Since March 2025</Typography.Text>
+            <Typography.Title level={4} className="mb-1">{data?.data?.name}</Typography.Title></>
+            }
           </div>
           
           <Menu

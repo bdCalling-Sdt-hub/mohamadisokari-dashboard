@@ -5,8 +5,8 @@ import { baseApi } from "../../utils/ApiBaseQuery";
 export const overviewApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     dashboardAnalysis: builder.query({
-      query: (month) => ({
-        url: `/admin/dashboard?filter=${month}`,
+      query: (filter) => ({
+        url: `/admin/dashboard?filter=${filter}`,
         method: "GET",
       }),
     }),

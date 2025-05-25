@@ -8,7 +8,7 @@ import { saveToken } from "../../features/auth/authService";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [Login , {isLoading}] = useLoginMutation();
+  const [Login, { isLoading }] = useLoginMutation();
 
 
 
@@ -23,6 +23,7 @@ const Login = () => {
         // Decode the token to get the role
         const decodedToken = jwtDecode(response?.data?.accessToken); // Changed here too
         const role = decodedToken?.role; // Extract role from token
+        console.log(role)
 
         // Redirect based on role
         if (role === "SUPER_ADMIN") {

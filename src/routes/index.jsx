@@ -54,14 +54,16 @@ const router = createBrowserRouter([
       { path: "/user-management/sales-history", element: <SalesHistory /> },
       { path: "/user-management/buying-history", element: <BuyingHistory /> },
       { path: "/transaction", element: <Transaction /> },
-      { path: "/support-chat", element: <SupportChat /> },
-      {
-        path: "/chat/:chatRoomId",
-        element: <SupportChat />,
-        children: [
-          { path: ":chatRoomId", element: <ChatList /> }
-        ],
-      },
+      { path: "", element: <SupportChat /> },
+     {
+  path: "/support-chat",
+  element: <SupportChat />,
+  children: [
+    { path: "chat/:chatRoomId", element: <SupportChat /> },  // relative path, no leading slash
+    { path: ":chatRoomId", element: <ChatList /> }
+  ],
+},
+
       { path: "/pushnotification", element: <PushNotification /> },
       { path: "/slider", element: <Slider /> },
       { path: "/video", element: <Video /> },

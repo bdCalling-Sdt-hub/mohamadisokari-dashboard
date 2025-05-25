@@ -26,6 +26,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGetAllUserQuery, useUpdateUserStatusMutation } from '../../../features/userManagement/UserManagementApi';
 import './UserManagement.css';
 import toast from 'react-hot-toast';
+import { baseURL } from '../../../utils/BaseURL';
 
 const { Text } = Typography;
 
@@ -38,6 +39,7 @@ const UserManagementTable = () => {
   
   // API fetch with current page
   const { data: userData, isLoading, refetch } = useGetAllUserQuery(currentPage);
+  console.log(userData)
   const [updateStatus, { isLoading: updatingStatusLoading }] = useUpdateUserStatusMutation();
   
   // Extract data and pagination info from API response
@@ -104,6 +106,7 @@ const UserManagementTable = () => {
     // Prepare data for Excel
     const exportData = selectedUsers.map(user => ({
       Name: user.name,
+      image: user.image,
       Email: user.email,
       'Phone Number': user.contactNumber ? `+${user.contactNumber}` : '',
       Address: user.location || '',
@@ -248,7 +251,7 @@ const UserManagementTable = () => {
           style={{ display: 'flex', alignItems: 'center', cursor: "pointer" }}
           onClick={(e) => handleNameClick(record, e)}
         >
-          <Avatar src={record.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(text)}&background=random`} size={40} />
+          <Avatar src={record.image ? `${baseURL}${record.image}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(text)}&background=random`} size={40} />
           <div style={{ marginLeft: 12 }}>
             <div style={{ fontWeight: 500 }}>{text}</div>
             <div style={{ fontSize: '12px', color: '#888' }}>{record.email}</div>

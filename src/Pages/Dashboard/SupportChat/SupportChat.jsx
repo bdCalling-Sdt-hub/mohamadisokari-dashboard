@@ -11,7 +11,7 @@ function SupportChat() {
 
 
   return (
-    <div className="container mx-auto gap-3 my-10 flex flex-col lg:flex-row">
+    <div className="container mx-auto gap-3  flex flex-col lg:flex-row">
       <div className={`w-full lg:w-3/12 bg-white ${isChatActive ? 'hidden lg:block' : ''}`}>
         <ChatList status={isChatActive} setIsChatActive={setIsChatActive} />
       </div>

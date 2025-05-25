@@ -12,8 +12,10 @@ import TopDistrict from "./TopDistrict";
 dayjs.extend(customParseFormat);
 
 const Home = () => {
-  const [selectedMonth, setSelectedMonth] = useState(null);
-  const { data: dashboardData, isLoading: dashboardLoading } = useDashboardAnalysisQuery();
+  const [selectedMonth, setSelectedMonth] = useState("thisMonth");
+  console.log(selectedMonth)
+  const { data: dashboardData, isLoading: dashboardLoading } = useDashboardAnalysisQuery(selectedMonth);
+  // console.log(dashboardData)
 
   const stats = [
     {
@@ -48,7 +50,6 @@ const Home = () => {
 
   const handleMonthChange = (value) => {
     setSelectedMonth(value);
-    console.log(`Selected month: ${value}`);
   };
 
   if (dashboardLoading) {

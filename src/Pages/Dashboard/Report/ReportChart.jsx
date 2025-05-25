@@ -120,11 +120,26 @@ const ReportChart = () => {
   });
 
   // Transform API data to match chart expectations with proper error handling
-  const chartData = data?.data ? Object.entries(data.data).map(([key, value]) => ({
-    name: `Day ${key}`,
-    review: value['under review'] || 0,
-    resolve: value.resolved || 0
-  })) : [];
+ const dayToMonthMap = {
+  '1': 'January',
+  '2': 'February',
+  '3': 'March',
+  '4': 'April',
+  '5': 'May',
+  '6': 'June',
+  '7': 'July',
+  '8': 'August',
+  '9': 'September',
+  '10': 'October',
+  '11': 'November',
+  '12': 'December'
+};
+
+const chartData = data?.data ? Object.entries(data.data).map(([key, value]) => ({
+  name: dayToMonthMap[key] || `Day ${key}`, // fallback if key is not 1-12
+  review: value['under review'] || 0,
+  resolve: value.resolved || 0
+})) : [];
 
   // Updated CustomTooltip component
   const CustomTooltip = ({ active, payload, label }) => {
