@@ -15,7 +15,6 @@ const Login = () => {
   const onFinish = async (values) => {
     try {
       const response = await Login(values).unwrap();
-      console.log(response);
       if (response.success) {
         saveToken(response?.data?.accessToken);
         localStorage.setItem("userId", response?.data?.userId);
@@ -23,7 +22,6 @@ const Login = () => {
         // Decode the token to get the role
         const decodedToken = jwtDecode(response?.data?.accessToken); // Changed here too
         const role = decodedToken?.role; // Extract role from token
-        console.log(role)
 
         // Redirect based on role
         if (role === "SUPER_ADMIN") {
@@ -36,7 +34,7 @@ const Login = () => {
 
       }
     } catch (error) {
-      toast.error(error?.data?.message);
+      toast.error(error?.data?.message ? error?.data?.message : "Login failed something server error");
     }
   };
 

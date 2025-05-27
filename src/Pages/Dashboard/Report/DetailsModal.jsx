@@ -9,14 +9,14 @@ function DetailsModal({ isModalOpen, setIsModalOpen, data }) {
 
   // Extract relevant information from the data object
   const {
-    reportId,
+    _id: reportId, // Use `_id` as Report ID
     status,
     type,
     reason,
     location,
     image,
     createdAt,
-    updatedAt
+    updatedAt,
   } = data;
 
   // Format dates for display
@@ -63,11 +63,15 @@ function DetailsModal({ isModalOpen, setIsModalOpen, data }) {
         <div className="mt-3">
           <p className="mb-2 font-medium">Product Image:</p>
           <div className="border rounded-md p-2 flex justify-center">
-            <img
-              src={`${baseURL}${image}`}
-              alt="Reported product"
-              className="max-h-60 object-contain"
-            />
+            {image ? (
+              <img
+                src={`${baseURL}${image}`}
+                alt="Reported product"
+                className="max-h-60 object-contain"
+              />
+            ) : (
+              <p>No image available</p>
+            )}
           </div>
         </div>
       </div>

@@ -1,6 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
 import AppReview from "../components/AppReview/AppReview.jsx";
-import Category from "../components/category/Category.jsx";
 import ProductDetails from "../components/product/ProductDetails.jsx";
 import ProductManagement from "../components/product/productManagement.jsx";
 import BuyingHistory from "../components/users/BuyingHistory.jsx";
@@ -46,7 +45,7 @@ const router = createBrowserRouter([
       { path: "/product-details", element: <ProductManagement /> },
       { path: "/app-review", element: <AppReview /> },
       { path: "/product-details/:id", element: <ProductDetails /> },
-      { path: "/category", element: <Category /> },
+      // { path: "/category", element: <Category /> },
       { path: "/reported-issues", element: <Report /> },
       { path: "/customer-list", element: <Customer /> },
       { path: "/user-management", element: <UserManagement /> },
@@ -55,14 +54,14 @@ const router = createBrowserRouter([
       { path: "/user-management/buying-history", element: <BuyingHistory /> },
       { path: "/transaction", element: <Transaction /> },
       { path: "", element: <SupportChat /> },
-     {
-  path: "/support-chat",
-  element: <SupportChat />,
-  children: [
-    { path: "chat/:chatRoomId", element: <SupportChat /> },  // relative path, no leading slash
-    { path: ":chatRoomId", element: <ChatList /> }
-  ],
-},
+      {
+        path: "/support-chat",
+        element: <SupportChat />,
+        children: [
+          { path: "chat/:chatRoomId", element: <SupportChat /> },  // relative path, no leading slash
+          { path: ":chatRoomId", element: <ChatList /> }
+        ],
+      },
 
       { path: "/pushnotification", element: <PushNotification /> },
       { path: "/slider", element: <Slider /> },

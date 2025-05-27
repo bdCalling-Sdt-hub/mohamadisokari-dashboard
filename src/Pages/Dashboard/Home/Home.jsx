@@ -13,7 +13,6 @@ dayjs.extend(customParseFormat);
 
 const Home = () => {
   const [selectedMonth, setSelectedMonth] = useState("thisMonth");
-  console.log(selectedMonth)
   const { data: dashboardData, isLoading: dashboardLoading } = useDashboardAnalysisQuery(selectedMonth);
   // console.log(dashboardData)
 

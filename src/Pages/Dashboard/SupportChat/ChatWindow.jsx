@@ -473,8 +473,6 @@ const ChatWindow = ({ id }) => {
           </Form.Item>
         </Form>
       </div>
-
-
     </div>
   );
 };

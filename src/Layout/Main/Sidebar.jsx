@@ -1,22 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FaQuoteRight } from "react-icons/fa";
-import { CgTemplate } from "react-icons/cg";
-import { LuClipboardList, LuGift } from "react-icons/lu";
-import { TbBellBolt, TbDashboard, TbListDetails } from "react-icons/tb";
-import { HiOutlineUsers } from "react-icons/hi";
-import { RxDashboard } from "react-icons/rx";
-import { PiMessengerLogoBold, PiWallet } from "react-icons/pi";
-import { FiLogOut, FiUsers } from "react-icons/fi";
-import { BiSolidCategoryAlt } from "react-icons/bi";
-import { TfiLayoutSlider, TfiLayoutSliderAlt } from "react-icons/tfi";
-import { RiContactsBook3Line, RiSettings5Line } from "react-icons/ri";
-import { MdHandyman, MdOutlineHomeRepairService, MdOutlineReportProblem, MdOutlinePrivacyTip ,  MdOutlineRoundaboutLeft } from "react-icons/md";
-import { IoDocumentTextOutline } from "react-icons/io5";
 import { Menu } from "antd";
+import { useEffect, useState } from "react";
 import { AiOutlineProduct, AiOutlineUsergroupAdd } from "react-icons/ai";
-import { GrTransaction } from "react-icons/gr";
+import { FaQuoteRight } from "react-icons/fa";
+import { FiLogOut } from "react-icons/fi";
 import { GoCodeReview } from "react-icons/go";
+import { GrTransaction } from "react-icons/gr";
+import { IoDocumentTextOutline } from "react-icons/io5";
+import { LuGift } from "react-icons/lu";
+import { MdOutlinePrivacyTip, MdOutlineReportProblem, MdOutlineRoundaboutLeft } from "react-icons/md";
+import { PiMessengerLogoBold } from "react-icons/pi";
+import { RiContactsBook3Line, RiSettings5Line } from "react-icons/ri";
+import { RxDashboard } from "react-icons/rx";
+import { TbBellBolt, TbListDetails } from "react-icons/tb";
+import { TfiLayoutSlider, TfiLayoutSliderAlt } from "react-icons/tfi";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const Sidebar = ({ isCollapsed }) => {
   const location = useLocation();
@@ -70,11 +67,11 @@ const Sidebar = ({ isCollapsed }) => {
       icon: getIcon("/product-details"),
       label: <Link to="/product-details">Product Management</Link>,
     },
-    {
-      key: "/category",
-      icon: getIcon("/category"),
-      label: <Link to="/category">Category</Link>,
-    },
+    // {
+    //   key: "/category",
+    //   icon: getIcon("/category"),
+    //   label: <Link to="/category">Category</Link>,
+    // },
     {
       key: "/app-review",
       icon: getIcon("/app-review"),
@@ -105,7 +102,7 @@ const Sidebar = ({ isCollapsed }) => {
       icon: getIcon("/privacy-policy"),
       label: "Cms",
       children: [
-         {
+        {
           key: "/about-us",
           icon: getIcon("/about-us"),
           label: <Link to="/about-us">About Us</Link>,
@@ -161,7 +158,7 @@ const Sidebar = ({ isCollapsed }) => {
         if (item.key === currentPath) {
           return { selectedKey: item.key, openKeys: [] };
         }
-        
+
         if (item.children) {
           const exactChildMatch = item.children.find(child => child.key === currentPath);
           if (exactChildMatch) {
@@ -176,9 +173,9 @@ const Sidebar = ({ isCollapsed }) => {
         if (item.key !== '/' && currentPath.startsWith(item.key)) {
           return { selectedKey: item.key, openKeys: [] };
         }
-        
+
         if (item.children) {
-          const partialChildMatch = item.children.find(child => 
+          const partialChildMatch = item.children.find(child =>
             child.key !== '/' && currentPath.startsWith(child.key)
           );
           if (partialChildMatch) {
@@ -203,9 +200,9 @@ const Sidebar = ({ isCollapsed }) => {
   return (
     <div className={`bg-quilocoP flex flex-col h-screen ${isCollapsed ? "w-[80px]" : "w-[280px]"}`}>
       {/* Scrollable Menu */}
-      <div 
-        className="flex-1 pt-16 overflow-y-auto" 
-        style={{ 
+      <div
+        className="flex-1 pt-16 overflow-y-auto"
+        style={{
           scrollbarWidth: 'thin',
           scrollbarGutter: 'stable',
         }}
@@ -228,16 +225,16 @@ const Sidebar = ({ isCollapsed }) => {
             }
           `}
         </style>
-        
+
         <Menu
           mode="inline"
           selectedKeys={[selectedKey]}
           openKeys={openKeys}
           onOpenChange={onOpenChange}
-          style={{ 
+          style={{
             background: "#ffffff",
             borderRight: 0,
-            paddingBottom:"10px",
+            paddingBottom: "10px",
             height: '100%',
           }}
           items={menuItems}
