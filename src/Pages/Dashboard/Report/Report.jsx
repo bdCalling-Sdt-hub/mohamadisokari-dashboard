@@ -2,6 +2,7 @@ import { DeleteOutlined, DownloadOutlined, EyeOutlined, FilterOutlined, LeftOutl
 import { Button, ConfigProvider, DatePicker, Dropdown, Input, Modal, Select, Table, Tag, Tooltip, message } from "antd";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import Spinner from "../../../components/common/Spinner";
 import { useDeleteReportMutation, useGetAllReportQuery, useGetPerticularReportQuery, useUpdateStatusMutation } from "../../../features/Report/ReportApi";
 import DetailsModal from "./DetailsModal";
 import ReportChart from "./ReportChart";
@@ -329,8 +330,8 @@ function Report() {
       render: (text, record) => (
         <div className="flex items-center gap-2">
           {record.sellerImage && (
-            <img 
-              src={record.sellerImage} 
+            <img
+              src={record.sellerImage}
               alt={text}
               className="w-6 h-6 rounded-full object-cover"
               onError={(e) => { e.target.style.display = 'none'; }}
@@ -347,8 +348,8 @@ function Report() {
       render: (text, record) => (
         <div className="flex items-center gap-2">
           {record.customerImage && (
-            <img 
-              src={record.customerImage} 
+            <img
+              src={record.customerImage}
               alt={text}
               className="w-6 h-6 rounded-full object-cover"
               onError={(e) => { e.target.style.display = 'none'; }}
@@ -661,7 +662,7 @@ function Report() {
 
           {/* View Details Modal */}
           {particularReportLoading ? (
-            <div>Loading...</div>
+            <Spinner />
           ) : (
             isModalOpen && (
               <DetailsModal

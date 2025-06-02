@@ -11,6 +11,7 @@ import {
   YAxis
 } from 'recharts';
 import { useGetReportChartQuery } from '../../../features/Report/ReportApi';
+import Spinner from '../../../components/common/Spinner';
 
 const ReportChart = () => {
   const [selectedDistrict, setSelectedDistrict] = useState('');
@@ -174,7 +175,7 @@ const chartData = data?.data ? Object.entries(data.data).map(([key, value]) => (
     });
   };
 
-  if (isLoading) return <div className="flex justify-center items-center h-64">Loading...</div>;
+  if (isLoading) return <Spinner />;
   if (error) return <div className="flex justify-center items-center h-64">Error loading data: {error.message || 'Could not fetch report data'}</div>;
 
   return (
